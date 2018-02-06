@@ -66,8 +66,6 @@ public:
     mooseError("subdomain setup for constraints is not implemented");
   }
 
-  virtual void residualEnd() {}
-
 protected:
   SubProblem & _subproblem;
   SystemBase & _sys;

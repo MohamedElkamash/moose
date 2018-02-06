@@ -16,6 +16,7 @@
 
 // Forward Declarations
 class MechanicalContactConstraint;
+class ContactLineSearch;
 
 template <>
 InputParameters validParams<MechanicalContactConstraint>();
@@ -32,7 +33,6 @@ public:
 
   virtual void timestepSetup() override;
   virtual void jacobianSetup() override;
-  virtual void residualEnd() override;
 
   virtual bool AugmentedLagrangianContactConverged();
 
@@ -88,6 +88,7 @@ public:
 
 protected:
   MooseSharedPointer<DisplacedProblem> _displaced_problem;
+  FEProblem & _fe_problem;
   Real nodalArea(PenetrationInfo & pinfo);
   Real getPenalty(PenetrationInfo & pinfo);
   Real getTangentialPenalty(PenetrationInfo & pinfo);
@@ -131,11 +132,14 @@ protected:
   /// The tolerance of the frictional force for augmented Lagrangian method
   Real _al_frictional_force_tolerance;
 
-  std::set<dof_id_type> _current_contact_state;
-  std::set<dof_id_type> _old_contact_state;
+  ContactLineSearch * _contact_linesearch;
+  std::set<dof_id_type> * _current_contact_state;
+  std::set<dof_id_type> * _newly_captured_nodes;
+  std::set<dof_id_type> * _newly_released_nodes;
 
-private:
-  const bool _print_contact_nodes;
+  static Threads::spin_mutex _contact_set_mutex;
+  static Threads::spin_mutex _newly_captured_mutex;
+  static Threads::spin_mutex _newly_released_mutex;
 };
 
 #endif

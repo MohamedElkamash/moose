@@ -14,13 +14,13 @@
 #include "AuxiliarySystem.h"
 #include "PenetrationLocator.h"
 #include "NearestNodeLocator.h"
-
 #include "SystemBase.h"
 #include "Assembly.h"
 #include "MooseMesh.h"
 #include "AugmentedLagrangianContactProblem.h"
 #include "Executioner.h"
 #include "AddVariableAction.h"
+#include "ContactLineSearch.h"
 
 #include "libmesh/string_to_enum.h"
 #include "libmesh/sparse_matrix.h"
@@ -109,12 +109,18 @@ validParams<MechanicalContactConstraint>()
                         "The tolerance of the frictional force for augmented Lagrangian method.");
   params.addParam<bool>(
       "print_contact_nodes", false, "Whether to print the number of nodes in contact.");
+  params.addPrivateParam<ContactLineSearch *>("contact_linesearch", nullptr);
   return params;
 }
+
+Threads::spin_mutex MechanicalContactConstraint::_contact_set_mutex;
+Threads::spin_mutex MechanicalContactConstraint::_newly_captured_mutex;
+Threads::spin_mutex MechanicalContactConstraint::_newly_released_mutex;
 
 MechanicalContactConstraint::MechanicalContactConstraint(const InputParameters & parameters)
   : NodeFaceConstraint(parameters),
     _displaced_problem(parameters.get<FEProblemBase *>("_fe_problem_base")->getDisplacedProblem()),
+    _fe_problem(*parameters.get<FEProblem *>("_fe_problem")),
     _component(getParam<unsigned int>("component")),
     _model(ContactMaster::contactModel(getParam<std::string>("model"))),
     _formulation(ContactMaster::contactFormulation(getParam<std::string>("formulation"))),
@@ -135,7 +141,12 @@ MechanicalContactConstraint::MechanicalContactConstraint(const InputParameters &
     _master_slave_jacobian(getParam<bool>("master_slave_jacobian")),
     _connected_slave_nodes_jacobian(getParam<bool>("connected_slave_nodes_jacobian")),
     _non_displacement_vars_jacobian(getParam<bool>("non_displacement_variables_jacobian")),
-    _print_contact_nodes(getParam<bool>("print_contact_nodes"))
+    _contact_linesearch(getParam<ContactLineSearch *>("contact_linesearch")),
+    _current_contact_state(_contact_linesearch ? _contact_linesearch->contact_state() : nullptr),
+    _newly_captured_nodes(_contact_linesearch ? _contact_linesearch->newly_captured_nodes()
+                                              : nullptr),
+    _newly_released_nodes(_contact_linesearch ? _contact_linesearch->newly_released_nodes()
+                                              : nullptr)
 {
   _overwrite_slave_residual = false;
 
@@ -224,6 +235,12 @@ MechanicalContactConstraint::timestepSetup()
       updateAugmentedLagrangianMultiplier(true);
 
     _update_stateful_data = false;
+
+    if (_contact_linesearch)
+    {
+      _contact_linesearch->lambda() = 1.;
+      _contact_linesearch->contactChangingThisTimestep() = false;
+    }
   }
 }
 
@@ -458,8 +475,7 @@ MechanicalContactConstraint::shouldApply()
     PenetrationInfo * pinfo = found->second;
     if (pinfo != NULL)
     {
-      bool is_nonlinear =
-          _subproblem.getMooseApp().executioner()->feProblem().computingNonlinearResid();
+      bool is_nonlinear = _fe_problem.computingNonlinearResid();
 
       // This computes the contact force once per constraint, rather than once per quad point
       // and for both master and slave cases.
@@ -469,8 +485,11 @@ MechanicalContactConstraint::shouldApply()
       if (pinfo->isCaptured())
       {
         in_contact = true;
-        if (is_nonlinear && _print_contact_nodes)
-          _current_contact_state.insert(pinfo->_node->id());
+        if (is_nonlinear && _current_contact_state)
+        {
+          Threads::spin_mutex::scoped_lock lock(_contact_set_mutex);
+          _current_contact_state->insert(pinfo->_node->id());
+        }
       }
     }
   }
@@ -504,7 +523,11 @@ MechanicalContactConstraint::computeContactForce(PenetrationInfo * pinfo, bool u
       MooseUtils::absoluteFuzzyGreaterEqual(gap_size, 0.0, _capture_tolerance))
   {
     newly_captured = true;
-    pinfo->capture();
+    if (_newly_captured_nodes)
+    {
+      _newly_captured_nodes->insert(node->id());
+      pinfo->capture();
+    }
 
     // Increment the lock count every time the node comes back into contact from not being in
     // contact.
@@ -756,6 +779,8 @@ MechanicalContactConstraint::computeContactForce(PenetrationInfo * pinfo, bool u
     const Real contact_pressure = -(pinfo->_normal * pinfo->_contact_force) / nodalArea(*pinfo);
     if (-contact_pressure >= _tension_release)
     {
+      if (_newly_released_nodes)
+        _newly_released_nodes->insert(node->id());
       pinfo->release();
       pinfo->_contact_force.zero();
     }
@@ -1778,22 +1803,4 @@ MechanicalContactConstraint::getCoupledVarComponent(unsigned int var_num, unsign
     }
   }
   return coupled_var_is_disp_var;
-}
-
-void
-MechanicalContactConstraint::residualEnd()
-{
-  if (_component == 0 && _print_contact_nodes)
-  {
-    _communicator.set_union(_current_contact_state, 0);
-    if (_current_contact_state == _old_contact_state)
-      _console << "Unchanged contact state. " << _current_contact_state.size()
-               << " nodes in contact.\n";
-    else
-      _console << "Changed contact state!!! " << _current_contact_state.size()
-               << " nodes in contact.\n";
-
-    _old_contact_state = _current_contact_state;
-    _current_contact_state.clear();
-  }
 }

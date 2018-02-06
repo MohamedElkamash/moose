@@ -91,7 +91,7 @@ EXTERN_C_END
 #endif
 
 NonlinearSystemBase::NonlinearSystemBase(FEProblemBase & fe_problem,
-                                         System & sys,
+                                         NonlinearImplicitSystem & sys,
                                          const std::string & name)
   : SystemBase(fe_problem, name, Moose::VAR_NONLINEAR),
     ConsoleStreamInterface(fe_problem.getMooseApp()),
@@ -1249,9 +1249,6 @@ NonlinearSystemBase::computeResidualInternal(Moose::KernelType type)
       // Displaced Constraints
       if (_fe_problem.getDisplacedProblem())
         constraintResiduals(*_Re_non_time, true);
-
-      if (_fe_problem.computingNonlinearResid())
-        _constraints.residualEnd();
     }
     PARALLEL_CATCH;
     _Re_non_time->close();
