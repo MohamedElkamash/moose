@@ -36,6 +36,9 @@ public:
   /// newly released nodes
   virtual std::set<dof_id_type> * newly_released_nodes() override { return &_newly_released_nodes; }
 
+  /// The current contact state
+  virtual std::set<dof_id_type> * contact_state() override { return &_current_contact_state; }
+
 protected:
   /// newly captured nodes
   std::set<dof_id_type> _newly_captured_nodes;
@@ -46,6 +49,10 @@ protected:
   std::set<dof_id_type> _previously_captured_nodes;
   /// nodes released on previous nl
   std::set<dof_id_type> _previously_released_nodes;
+
+  /// The entire contact set
+  std::set<dof_id_type> _current_contact_state;
+  std::set<dof_id_type> _old_contact_state;
 };
 
 #endif

@@ -166,31 +166,27 @@
   type = Transient
   solve_type = 'PJFNK'
 
-  petsc_options = '-snes_ksp_ew'
+  petsc_options = '-ksp_monitor_true_residual'
   petsc_options_iname = '-pc_type -pc_factor_mat_solver_package'
   petsc_options_value = 'lu     superlu_dist'
 
   line_search = 'none'
 
   l_max_its = 100
-  nl_max_its = 1000
+  nl_max_its = 20
   dt = 0.1
   end_time = 15
-  num_steps = 1000
+  num_steps = 2
   l_tol = 1e-6
   nl_rel_tol = 1e-10
   nl_abs_tol = 1e-6
   dtmin = 0.01
-
-  [./Predictor]
-    type = SimplePredictor
-    scale = 1.0
-  [../]
 []
 
 [Outputs]
   file_base = frictionless_penalty_out
-  interval = 10
+  print_linear_residuals = false
+  checkpoint = true
   [./exodus]
     type = Exodus
     elemental_as_nodal = true
@@ -210,5 +206,6 @@
     formulation = penalty
     system = constraint
     normal_smoothing_distance = 0.1
+    line_search = PenalizeOscillations
   [../]
 []

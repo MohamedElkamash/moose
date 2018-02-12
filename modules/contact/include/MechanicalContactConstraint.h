@@ -134,12 +134,8 @@ protected:
 
   ContactLineSearch * _contact_linesearch;
   std::set<dof_id_type> * _current_contact_state;
-  std::set<dof_id_type> * _newly_captured_nodes;
-  std::set<dof_id_type> * _newly_released_nodes;
 
   static Threads::spin_mutex _contact_set_mutex;
-  static Threads::spin_mutex _newly_captured_mutex;
-  static Threads::spin_mutex _newly_released_mutex;
 };
 
 #endif

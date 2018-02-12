@@ -50,6 +50,7 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
 
   /* compute residual to determine whether contact state has changed since the last non-linear
    * residual evaluation */
+  _current_contact_state.clear();
   _newly_captured_nodes.clear();
   _newly_released_nodes.clear();
   ierr = (*linesearch->ops->snesfunc)(snes, W, F);
@@ -62,8 +63,29 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
     LIBMESH_CHKERR(ierr);
   }
 
-  _communicator.set_union(_newly_captured_nodes, 0);
-  _communicator.set_union(_newly_released_nodes, 0);
+  _communicator.set_union(_current_contact_state, 0);
+  std::cout << "\n";
+  if (!_current_contact_state.empty())
+  {
+    std::cout << "Node ids in contact: ";
+    for (auto & node_id : _current_contact_state)
+      std::cout << node_id << " ";
+    std::cout << "\n";
+  }
+  else
+    std::cout << "No nodes in contact\n";
+
+  std::set_difference(_current_contact_state.begin(),
+                      _current_contact_state.end(),
+                      _old_contact_state.begin(),
+                      _old_contact_state.end(),
+                      std::inserter(_newly_captured_nodes, _newly_captured_nodes.begin()));
+  std::set_difference(_old_contact_state.begin(),
+                      _old_contact_state.end(),
+                      _current_contact_state.begin(),
+                      _current_contact_state.end(),
+                      std::inserter(_newly_released_nodes, _newly_released_nodes.begin()));
+
   std::set<dof_id_type> in_then_out;
   std::set<dof_id_type> out_then_in;
   std::set_intersection(_previously_captured_nodes.begin(),
@@ -79,13 +101,22 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
 
   while (!in_then_out.empty() || !out_then_in.empty())
   {
-    _console << "Lambda = " << _contact_lambda << "\n";
-    _console << "Number of oscillating nodes = " << in_then_out.size() + out_then_in.size() << "\n";
+    std::cout << "Lambda = " << _contact_lambda << "\n";
+    std::cout << "Number of oscillating nodes = " << in_then_out.size() + out_then_in.size()
+              << "\n";
+    std::cout << "Oscillating nodes : ";
+    for (auto & node_id : in_then_out)
+      std::cout << node_id << " ";
+    for (auto & node_id : out_then_in)
+      std::cout << node_id << " ";
+    std::cout << "\n\n";
+
     _contact_lambda *= 0.5;
     /* update */
     ierr = VecWAXPY(W, -_contact_lambda, Y, X);
     LIBMESH_CHKERR(ierr);
 
+    _current_contact_state.clear();
     _newly_captured_nodes.clear();
     _newly_released_nodes.clear();
     in_then_out.clear();
@@ -99,8 +130,26 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
       ierr = SNESLineSearchSetReason(linesearch, SNES_LINESEARCH_FAILED_DOMAIN);
       LIBMESH_CHKERR(ierr);
     }
-    _communicator.set_union(_newly_captured_nodes, 0);
-    _communicator.set_union(_newly_released_nodes, 0);
+
+    _communicator.set_union(_current_contact_state, 0);
+    if (!_current_contact_state.empty())
+    {
+      std::cout << "Node ids in contact: ";
+      for (auto & node_id : _current_contact_state)
+        std::cout << node_id << " ";
+      std::cout << "\n";
+    }
+
+    std::set_difference(_current_contact_state.begin(),
+                        _current_contact_state.end(),
+                        _old_contact_state.begin(),
+                        _old_contact_state.end(),
+                        std::inserter(_newly_captured_nodes, _newly_captured_nodes.begin()));
+    std::set_difference(_old_contact_state.begin(),
+                        _old_contact_state.end(),
+                        _current_contact_state.begin(),
+                        _current_contact_state.end(),
+                        std::inserter(_newly_released_nodes, _newly_released_nodes.begin()));
     std::set_intersection(_previously_captured_nodes.begin(),
                           _previously_captured_nodes.end(),
                           _newly_released_nodes.begin(),
@@ -112,8 +161,8 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
                           _newly_captured_nodes.end(),
                           std::inserter(out_then_in, out_then_in.begin()));
   }
-  _console << "Lambda = " << _contact_lambda << "\n";
-  _console << "No oscillating nodes\n";
+  std::cout << "Lambda = " << _contact_lambda << "\n";
+  std::cout << "No oscillating nodes\n\n";
 
   ierr = VecScale(Y, _contact_lambda);
   LIBMESH_CHKERR(ierr);
@@ -129,6 +178,7 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
 
   if (changed_w || changed_y)
   {
+    _current_contact_state.clear();
     _newly_captured_nodes.clear();
     _newly_released_nodes.clear();
     ierr = (*linesearch->ops->snesfunc)(snes, W, F);
@@ -140,12 +190,29 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
       ierr = SNESLineSearchSetReason(linesearch, SNES_LINESEARCH_FAILED_DOMAIN);
       LIBMESH_CHKERR(ierr);
     }
-    _communicator.set_union(_newly_captured_nodes, 0);
-    _communicator.set_union(_newly_released_nodes, 0);
+    _communicator.set_union(_current_contact_state, 0);
+    if (!_current_contact_state.empty())
+    {
+      std::cout << "Node ids in contact: ";
+      for (auto & node_id : _current_contact_state)
+        std::cout << node_id << " ";
+      std::cout << "\n";
+    }
+    std::set_difference(_current_contact_state.begin(),
+                        _current_contact_state.end(),
+                        _old_contact_state.begin(),
+                        _old_contact_state.end(),
+                        std::inserter(_newly_captured_nodes, _newly_captured_nodes.begin()));
+    std::set_difference(_old_contact_state.begin(),
+                        _old_contact_state.end(),
+                        _current_contact_state.begin(),
+                        _current_contact_state.end(),
+                        std::inserter(_newly_released_nodes, _newly_released_nodes.begin()));
   }
 
   _previously_captured_nodes = _newly_captured_nodes;
   _previously_released_nodes = _newly_released_nodes;
+  _old_contact_state = _current_contact_state;
 
   ierr = VecNormBegin(Y, NORM_2, &linesearch->ynorm);
   LIBMESH_CHKERR(ierr);

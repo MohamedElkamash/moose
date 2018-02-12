@@ -114,8 +114,6 @@ validParams<MechanicalContactConstraint>()
 }
 
 Threads::spin_mutex MechanicalContactConstraint::_contact_set_mutex;
-Threads::spin_mutex MechanicalContactConstraint::_newly_captured_mutex;
-Threads::spin_mutex MechanicalContactConstraint::_newly_released_mutex;
 
 MechanicalContactConstraint::MechanicalContactConstraint(const InputParameters & parameters)
   : NodeFaceConstraint(parameters),
@@ -142,11 +140,7 @@ MechanicalContactConstraint::MechanicalContactConstraint(const InputParameters &
     _connected_slave_nodes_jacobian(getParam<bool>("connected_slave_nodes_jacobian")),
     _non_displacement_vars_jacobian(getParam<bool>("non_displacement_variables_jacobian")),
     _contact_linesearch(getParam<ContactLineSearch *>("contact_linesearch")),
-    _current_contact_state(_contact_linesearch ? _contact_linesearch->contact_state() : nullptr),
-    _newly_captured_nodes(_contact_linesearch ? _contact_linesearch->newly_captured_nodes()
-                                              : nullptr),
-    _newly_released_nodes(_contact_linesearch ? _contact_linesearch->newly_released_nodes()
-                                              : nullptr)
+    _current_contact_state(_contact_linesearch ? _contact_linesearch->contact_state() : nullptr)
 {
   _overwrite_slave_residual = false;
 
@@ -523,11 +517,7 @@ MechanicalContactConstraint::computeContactForce(PenetrationInfo * pinfo, bool u
       MooseUtils::absoluteFuzzyGreaterEqual(gap_size, 0.0, _capture_tolerance))
   {
     newly_captured = true;
-    if (_newly_captured_nodes)
-    {
-      _newly_captured_nodes->insert(node->id());
-      pinfo->capture();
-    }
+    pinfo->capture();
 
     // Increment the lock count every time the node comes back into contact from not being in
     // contact.
@@ -774,13 +764,11 @@ MechanicalContactConstraint::computeContactForce(PenetrationInfo * pinfo, bool u
 
   // Release
   if (update_contact_set && _model != CM_GLUED && pinfo->isCaptured() && !newly_captured &&
-      _tension_release >= 0.0 && pinfo->_locked_this_step < 2)
+      _tension_release >= 0.0)
   {
     const Real contact_pressure = -(pinfo->_normal * pinfo->_contact_force) / nodalArea(*pinfo);
     if (-contact_pressure >= _tension_release)
     {
-      if (_newly_released_nodes)
-        _newly_released_nodes->insert(node->id());
       pinfo->release();
       pinfo->_contact_force.zero();
     }
