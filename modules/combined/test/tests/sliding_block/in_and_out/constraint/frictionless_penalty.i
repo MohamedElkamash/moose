@@ -107,6 +107,10 @@
     variable = contact_pressure
     nodeid = 222
   [../]
+  [./tot_nonlin_it]
+    type = CumulativeValuePostprocessor
+    postprocessor = nonlinear_its
+  [../]
 []
 
 [BCs]
@@ -173,7 +177,7 @@
   line_search = 'none'
 
   l_max_its = 100
-  nl_max_its = 10
+  nl_max_its = 15
   dt = 0.1
   end_time = 3
   # num_steps = 30
@@ -184,6 +188,7 @@
 []
 
 [Outputs]
+  print_perf_log = true
   file_base = frictionless_penalty_out
   print_linear_residuals = false
   checkpoint = true
@@ -206,6 +211,6 @@
     formulation = penalty
     system = constraint
     normal_smoothing_distance = 0.1
-    line_search = PenalizeOscillations
+    # line_search = PenalizeOscillations
   [../]
 []

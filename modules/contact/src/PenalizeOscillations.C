@@ -27,12 +27,12 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
   PetscErrorCode ierr;
   Vec X, F, Y, W, G;
   SNES snes;
-  PetscReal gnorm, xnorm, ynorm;
+  PetscReal fnorm, xnorm, ynorm, gnorm;
   PetscBool domainerror;
 
   ierr = SNESLineSearchGetVecs(linesearch, &X, &F, &Y, &W, &G);
   LIBMESH_CHKERR(ierr);
-  ierr = SNESLineSearchGetNorms(linesearch, &xnorm, &gnorm, &ynorm);
+  ierr = SNESLineSearchGetNorms(linesearch, &xnorm, &fnorm, &ynorm);
   LIBMESH_CHKERR(ierr);
   ierr = SNESLineSearchGetSNES(linesearch, &snes);
   LIBMESH_CHKERR(ierr);
@@ -62,6 +62,8 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
     ierr = SNESLineSearchSetReason(linesearch, SNES_LINESEARCH_FAILED_DOMAIN);
     LIBMESH_CHKERR(ierr);
   }
+  ierr = VecNorm(F, NORM_2, &gnorm);
+  LIBMESH_CHKERR(ierr);
 
   _communicator.set_union(_current_contact_state);
   _console << "\n";
@@ -99,7 +101,7 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
                         _newly_captured_nodes.end(),
                         std::inserter(out_then_in, out_then_in.begin()));
 
-  while (!in_then_out.empty() || !out_then_in.empty())
+  while ((!in_then_out.empty() || !out_then_in.empty()) && gnorm > fnorm)
   {
     _console << "Lambda = " << _contact_lambda << "\n";
     _console << "Number of oscillating nodes = " << in_then_out.size() + out_then_in.size() << "\n";
@@ -129,6 +131,8 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
       ierr = SNESLineSearchSetReason(linesearch, SNES_LINESEARCH_FAILED_DOMAIN);
       LIBMESH_CHKERR(ierr);
     }
+    ierr = VecNorm(F, NORM_2, &gnorm);
+    LIBMESH_CHKERR(ierr);
 
     _communicator.set_union(_current_contact_state);
     if (!_current_contact_state.empty())
@@ -161,7 +165,18 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
                           std::inserter(out_then_in, out_then_in.begin()));
   }
   _console << "Lambda = " << _contact_lambda << "\n";
-  _console << "No oscillating nodes\n\n";
+  if (in_then_out.empty() && out_then_in.empty())
+    _console << "No oscillating nodes\n\n";
+  else
+  {
+    _console << "Number of oscillating nodes = " << in_then_out.size() + out_then_in.size() << "\n";
+    _console << "Oscillating nodes : ";
+    for (auto & node_id : in_then_out)
+      _console << node_id << " ";
+    for (auto & node_id : out_then_in)
+      _console << node_id << " ";
+    _console << "\nHowever, norm reduced so moving on.\n\n";
+  }
 
   ierr = VecScale(Y, _contact_lambda);
   LIBMESH_CHKERR(ierr);
