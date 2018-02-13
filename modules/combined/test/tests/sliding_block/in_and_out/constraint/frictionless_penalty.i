@@ -173,10 +173,10 @@
   line_search = 'none'
 
   l_max_its = 100
-  nl_max_its = 20
+  nl_max_its = 10
   dt = 0.1
-  end_time = 15
-  num_steps = 2
+  end_time = 3
+  # num_steps = 30
   l_tol = 1e-6
   nl_rel_tol = 1e-10
   nl_abs_tol = 1e-6

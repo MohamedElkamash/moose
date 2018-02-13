@@ -63,17 +63,17 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
     LIBMESH_CHKERR(ierr);
   }
 
-  _communicator.set_union(_current_contact_state, 0);
-  std::cout << "\n";
+  _communicator.set_union(_current_contact_state);
+  _console << "\n";
   if (!_current_contact_state.empty())
   {
-    std::cout << "Node ids in contact: ";
+    _console << "Node ids in contact: ";
     for (auto & node_id : _current_contact_state)
-      std::cout << node_id << " ";
-    std::cout << "\n";
+      _console << node_id << " ";
+    _console << "\n";
   }
   else
-    std::cout << "No nodes in contact\n";
+    _console << "No nodes in contact\n";
 
   std::set_difference(_current_contact_state.begin(),
                       _current_contact_state.end(),
@@ -101,15 +101,14 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
 
   while (!in_then_out.empty() || !out_then_in.empty())
   {
-    std::cout << "Lambda = " << _contact_lambda << "\n";
-    std::cout << "Number of oscillating nodes = " << in_then_out.size() + out_then_in.size()
-              << "\n";
-    std::cout << "Oscillating nodes : ";
+    _console << "Lambda = " << _contact_lambda << "\n";
+    _console << "Number of oscillating nodes = " << in_then_out.size() + out_then_in.size() << "\n";
+    _console << "Oscillating nodes : ";
     for (auto & node_id : in_then_out)
-      std::cout << node_id << " ";
+      _console << node_id << " ";
     for (auto & node_id : out_then_in)
-      std::cout << node_id << " ";
-    std::cout << "\n\n";
+      _console << node_id << " ";
+    _console << "\n\n";
 
     _contact_lambda *= 0.5;
     /* update */
@@ -131,13 +130,13 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
       LIBMESH_CHKERR(ierr);
     }
 
-    _communicator.set_union(_current_contact_state, 0);
+    _communicator.set_union(_current_contact_state);
     if (!_current_contact_state.empty())
     {
-      std::cout << "Node ids in contact: ";
+      _console << "Node ids in contact: ";
       for (auto & node_id : _current_contact_state)
-        std::cout << node_id << " ";
-      std::cout << "\n";
+        _console << node_id << " ";
+      _console << "\n";
     }
 
     std::set_difference(_current_contact_state.begin(),
@@ -161,8 +160,8 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
                           _newly_captured_nodes.end(),
                           std::inserter(out_then_in, out_then_in.begin()));
   }
-  std::cout << "Lambda = " << _contact_lambda << "\n";
-  std::cout << "No oscillating nodes\n\n";
+  _console << "Lambda = " << _contact_lambda << "\n";
+  _console << "No oscillating nodes\n\n";
 
   ierr = VecScale(Y, _contact_lambda);
   LIBMESH_CHKERR(ierr);
@@ -190,13 +189,13 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
       ierr = SNESLineSearchSetReason(linesearch, SNES_LINESEARCH_FAILED_DOMAIN);
       LIBMESH_CHKERR(ierr);
     }
-    _communicator.set_union(_current_contact_state, 0);
+    _communicator.set_union(_current_contact_state);
     if (!_current_contact_state.empty())
     {
-      std::cout << "Node ids in contact: ";
+      _console << "Node ids in contact: ";
       for (auto & node_id : _current_contact_state)
-        std::cout << node_id << " ";
-      std::cout << "\n";
+        _console << node_id << " ";
+      _console << "\n";
     }
     std::set_difference(_current_contact_state.begin(),
                         _current_contact_state.end(),
@@ -210,23 +209,18 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
                         std::inserter(_newly_released_nodes, _newly_released_nodes.begin()));
   }
 
-  _previously_captured_nodes = _newly_captured_nodes;
-  _previously_released_nodes = _newly_released_nodes;
-  _old_contact_state = _current_contact_state;
-
-  ierr = VecNormBegin(Y, NORM_2, &linesearch->ynorm);
+  ierr = VecNorm(Y, NORM_2, &linesearch->ynorm);
   LIBMESH_CHKERR(ierr);
-  ierr = VecNormBegin(W, NORM_2, &linesearch->xnorm);
+  ierr = VecNorm(W, NORM_2, &linesearch->xnorm);
   LIBMESH_CHKERR(ierr);
-  ierr = VecNormEnd(Y, NORM_2, &linesearch->ynorm);
-  LIBMESH_CHKERR(ierr);
-  ierr = VecNormEnd(W, NORM_2, &linesearch->xnorm);
-  LIBMESH_CHKERR(ierr);
-
   ierr = VecNorm(F, NORM_2, &linesearch->fnorm);
   LIBMESH_CHKERR(ierr);
 
   /* copy the solution over */
   ierr = VecCopy(W, X);
   LIBMESH_CHKERR(ierr);
+
+  _previously_captured_nodes = _newly_captured_nodes;
+  _previously_released_nodes = _newly_released_nodes;
+  _old_contact_state = _current_contact_state;
 }
