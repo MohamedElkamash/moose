@@ -38,6 +38,9 @@ public:
   /// The current contact state
   virtual std::set<dof_id_type> * contact_state() { return nullptr; }
 
+  /// The old contact state
+  virtual std::set<dof_id_type> * old_contact_state() { return nullptr; }
+
   /// newly captured nodes
   virtual std::set<dof_id_type> * newly_captured_nodes() { return nullptr; }
 

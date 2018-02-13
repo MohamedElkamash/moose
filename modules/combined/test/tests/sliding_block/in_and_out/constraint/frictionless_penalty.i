@@ -179,7 +179,7 @@
   l_max_its = 100
   nl_max_its = 15
   dt = 0.1
-  end_time = 3
+  end_time = 1
   # num_steps = 30
   l_tol = 1e-6
   nl_rel_tol = 1e-10
@@ -211,6 +211,6 @@
     formulation = penalty
     system = constraint
     normal_smoothing_distance = 0.1
-    # line_search = PenalizeOscillations
+    line_search = MinimizeResidual
   [../]
 []

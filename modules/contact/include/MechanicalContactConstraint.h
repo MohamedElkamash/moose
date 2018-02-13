@@ -17,6 +17,11 @@
 // Forward Declarations
 class MechanicalContactConstraint;
 class ContactLineSearch;
+namespace libMesh
+{
+template <typename T>
+class PetscNonlinearSolver;
+}
 
 template <>
 InputParameters validParams<MechanicalContactConstraint>();
@@ -134,6 +139,8 @@ protected:
 
   ContactLineSearch * _contact_linesearch;
   std::set<dof_id_type> * _current_contact_state;
+  std::set<dof_id_type> * _initial_contact_state;
+  PetscNonlinearSolver<Real> * _petsc_solver;
 
   static Threads::spin_mutex _contact_set_mutex;
 };

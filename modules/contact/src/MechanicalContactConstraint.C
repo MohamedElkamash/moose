@@ -24,6 +24,7 @@
 
 #include "libmesh/string_to_enum.h"
 #include "libmesh/sparse_matrix.h"
+#include "libmesh/petsc_nonlinear_solver.h"
 
 template <>
 InputParameters
@@ -110,6 +111,7 @@ validParams<MechanicalContactConstraint>()
   params.addParam<bool>(
       "print_contact_nodes", false, "Whether to print the number of nodes in contact.");
   params.addPrivateParam<ContactLineSearch *>("contact_linesearch", nullptr);
+  params.addPrivateParam<PetscNonlinearSolver<Real> *>("petsc_solver", nullptr);
   return params;
 }
 
@@ -140,7 +142,10 @@ MechanicalContactConstraint::MechanicalContactConstraint(const InputParameters &
     _connected_slave_nodes_jacobian(getParam<bool>("connected_slave_nodes_jacobian")),
     _non_displacement_vars_jacobian(getParam<bool>("non_displacement_variables_jacobian")),
     _contact_linesearch(getParam<ContactLineSearch *>("contact_linesearch")),
-    _current_contact_state(_contact_linesearch ? _contact_linesearch->contact_state() : nullptr)
+    _current_contact_state(_contact_linesearch ? _contact_linesearch->contact_state() : nullptr),
+    _initial_contact_state(_contact_linesearch ? _contact_linesearch->old_contact_state()
+                                               : nullptr),
+    _petsc_solver(getParam<PetscNonlinearSolver<Real> *>("petsc_solver"))
 {
   _overwrite_slave_residual = false;
 
@@ -482,7 +487,10 @@ MechanicalContactConstraint::shouldApply()
         if (is_nonlinear && _current_contact_state)
         {
           Threads::spin_mutex::scoped_lock lock(_contact_set_mutex);
-          _current_contact_state->insert(pinfo->_node->id());
+          if (_petsc_solver->get_current_nonlinear_iteration_number() == 0)
+            _initial_contact_state->insert(pinfo->_node->id());
+          else
+            _current_contact_state->insert(pinfo->_node->id());
         }
       }
     }

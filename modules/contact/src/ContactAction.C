@@ -15,6 +15,7 @@
 #include "AddVariableAction.h"
 #include "PenalizeAnyChange.h"
 #include "PenalizeOscillations.h"
+#include "MinimizeResidual.h"
 #include "NonlinearSystemBase.h"
 #include "libmesh/petsc_nonlinear_solver.h"
 
@@ -90,7 +91,7 @@ validParams<ContactAction>()
       "contact_growth_factor",
       1.2,
       "How much to grow lambda in the newton step when the contact state is unchanged.");
-  MooseEnum line_search("PenalizeAny PenalizeOscillations Petsc", "Petsc");
+  MooseEnum line_search("PenalizeAny PenalizeOscillations MinimizeResidual Petsc", "Petsc");
   params.addParam<MooseEnum>("line_search", line_search, "What type of line search to use.");
   return params;
 }
@@ -129,6 +130,12 @@ ContactAction::act()
                                                   getParam<Real>("contact_cutback_factor"),
                                                   getParam<Real>("contact_growth_factor"),
                                                   _app);
+  else if (getParam<MooseEnum>("line_search") == "MinimizeResidual")
+    contact_linesearch =
+        libmesh_make_unique<MinimizeResidual>(*_problem,
+                                              getParam<Real>("contact_cutback_factor"),
+                                              getParam<Real>("contact_growth_factor"),
+                                              _app);
 
   if (!_problem->getDisplacedProblem())
     mooseError("Contact requires updated coordinates.  Use the 'displacements = ...' line in the "
@@ -187,6 +194,15 @@ ContactAction::act()
         params.set<NonlinearVariableName>("variable") = displacements[i];
         params.set<std::vector<VariableName>>("master_variable") = {coupled_displacements[i]};
         params.set<ContactLineSearch *>("contact_linesearch") = contact_linesearch.get();
+        if (getParam<MooseEnum>("line_search") != "Petsc")
+        {
+          if (auto * petsc_nonlinear_solver = dynamic_cast<PetscNonlinearSolver<Real> *>(
+                  _problem->getNonlinearSystemBase().system().nonlinear_solver.get()))
+          {
+            petsc_nonlinear_solver->linesearch_object = std::move(contact_linesearch);
+            params.set<PetscNonlinearSolver<Real> *>("petsc_solver") = petsc_nonlinear_solver;
+          }
+        }
 
         _problem->addConstraint("MechanicalContactConstraint", name, params);
       }
@@ -230,15 +246,5 @@ ContactAction::act()
         }
       }
     }
-  }
-  if (getParam<MooseEnum>("line_search") != "Petsc")
-  {
-#ifdef LIBMESH_HAVE_PETSC
-    PetscNonlinearSolver<Real> & petsc_nonlinear_solver = static_cast<PetscNonlinearSolver<Real> &>(
-        *_problem->getNonlinearSystemBase().system().nonlinear_solver);
-    petsc_nonlinear_solver.linesearch_object = std::move(contact_linesearch);
-#else
-    mooseError("Custom line search only configured to work with Petsc");
-#endif
   }
 }

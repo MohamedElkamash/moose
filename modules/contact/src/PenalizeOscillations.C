@@ -101,7 +101,7 @@ PenalizeOscillations::linesearch(SNESLineSearch linesearch)
                         _newly_captured_nodes.end(),
                         std::inserter(out_then_in, out_then_in.begin()));
 
-  while ((!in_then_out.empty() || !out_then_in.empty()) && gnorm > fnorm)
+  while ((!in_then_out.empty() || !out_then_in.empty())) // && gnorm > fnorm)
   {
     _console << "Lambda = " << _contact_lambda << "\n";
     _console << "Number of oscillating nodes = " << in_then_out.size() + out_then_in.size() << "\n";
