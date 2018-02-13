@@ -177,7 +177,7 @@
   line_search = 'none'
 
   l_max_its = 100
-  nl_max_its = 15
+  nl_max_its = 30
   dt = 0.1
   end_time = 1
   # num_steps = 30

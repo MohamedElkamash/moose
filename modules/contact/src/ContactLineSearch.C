@@ -23,6 +23,7 @@ ContactLineSearch::ContactLineSearch(FEProblemBase & fe_problem,
     _cutback_factor(cutback_factor),
     _growth_factor(growth_factor),
     _contact_lambda(1.),
-    _old_contact_lambda(1.)
+    _old_contact_lambda(1.),
+    _nl_its(0)
 {
 }

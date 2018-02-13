@@ -194,15 +194,6 @@ ContactAction::act()
         params.set<NonlinearVariableName>("variable") = displacements[i];
         params.set<std::vector<VariableName>>("master_variable") = {coupled_displacements[i]};
         params.set<ContactLineSearch *>("contact_linesearch") = contact_linesearch.get();
-        if (getParam<MooseEnum>("line_search") != "Petsc")
-        {
-          if (auto * petsc_nonlinear_solver = dynamic_cast<PetscNonlinearSolver<Real> *>(
-                  _problem->getNonlinearSystemBase().system().nonlinear_solver.get()))
-          {
-            petsc_nonlinear_solver->linesearch_object = std::move(contact_linesearch);
-            params.set<PetscNonlinearSolver<Real> *>("petsc_solver") = petsc_nonlinear_solver;
-          }
-        }
 
         _problem->addConstraint("MechanicalContactConstraint", name, params);
       }
@@ -247,4 +238,7 @@ ContactAction::act()
       }
     }
   }
+  PetscNonlinearSolver<Real> & petsc_nonlinear_solver = static_cast<PetscNonlinearSolver<Real> &>(
+      *_problem->getNonlinearSystemBase().system().nonlinear_solver);
+  petsc_nonlinear_solver.linesearch_object = std::move(contact_linesearch);
 }

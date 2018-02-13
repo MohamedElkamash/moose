@@ -239,6 +239,9 @@ MechanicalContactConstraint::timestepSetup()
     {
       _contact_linesearch->lambda() = 1.;
       _contact_linesearch->contactChangingThisTimestep() = false;
+      if (_initial_contact_state)
+        _initial_contact_state->clear();
+      _contact_linesearch->nl_its() = 0;
     }
   }
 }
@@ -484,12 +487,12 @@ MechanicalContactConstraint::shouldApply()
       if (pinfo->isCaptured())
       {
         in_contact = true;
-        if (is_nonlinear && _current_contact_state)
+        if (is_nonlinear)
         {
           Threads::spin_mutex::scoped_lock lock(_contact_set_mutex);
-          if (_petsc_solver->get_current_nonlinear_iteration_number() == 0)
+          if (_initial_contact_state && _contact_linesearch->nl_its() == 0)
             _initial_contact_state->insert(pinfo->_node->id());
-          else
+          else if (_current_contact_state)
             _current_contact_state->insert(pinfo->_node->id());
         }
       }

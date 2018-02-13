@@ -47,6 +47,12 @@ public:
   /// newly released nodes
   virtual std::set<dof_id_type> * newly_released_nodes() { return nullptr; }
 
+  /// writeable reference to number of non-linear iterations
+  size_t & nl_its() { return _nl_its; }
+
+  /// read-only reference to number of non-linear iterations
+  const size_t & nl_its() const { return _nl_its; }
+
 protected:
   FEProblemBase & _fe_problem;
 
@@ -64,6 +70,9 @@ protected:
 
   /// old contact lambda
   Real _old_contact_lambda;
+
+  /// number of non-linear iterations
+  size_t _nl_its;
 };
 
 #endif

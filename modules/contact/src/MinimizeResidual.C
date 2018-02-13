@@ -39,6 +39,7 @@ MinimizeResidual::linesearch(SNESLineSearch linesearch)
   ierr = SNESLineSearchSetReason(linesearch, SNES_LINESEARCH_SUCCEEDED);
   LIBMESH_CHKERR(ierr);
 
+  ++_nl_its;
   _communicator.set_union(_old_contact_state);
 
   /* precheck */
