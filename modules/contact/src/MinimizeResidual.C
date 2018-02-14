@@ -92,7 +92,8 @@ MinimizeResidual::linesearch(SNESLineSearch linesearch)
   else
     KSPSetTolerances(ksp, _user_ksp_rtol, ksp_abstol, ksp_dtol, ksp_maxits);
 
-  while (_contact_lambda > 1e-3)
+  size_t ls_its = 0;
+  while (ls_its < 2)
   {
     _contact_lambda *= 0.5;
     /* update */
@@ -121,6 +122,7 @@ MinimizeResidual::linesearch(SNESLineSearch linesearch)
       _communicator.set_union(_current_contact_state);
       contact_state_stored = _current_contact_state;
       printContactInfo();
+      ++ls_its;
     }
     else
       break;
