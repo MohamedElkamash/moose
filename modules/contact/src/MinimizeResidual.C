@@ -16,7 +16,7 @@ MinimizeResidual::MinimizeResidual(FEProblemBase & fe_problem,
                                    Real cutback_factor,
                                    Real growth_factor,
                                    MooseApp & app)
-  : ContactLineSearch(fe_problem, cutback_factor, growth_factor, app)
+  : ContactLineSearch(fe_problem, cutback_factor, growth_factor, app), _user_ksp_rtol_set(false)
 {
 }
 
@@ -25,10 +25,13 @@ MinimizeResidual::linesearch(SNESLineSearch linesearch)
 {
   PetscBool changed_y = PETSC_FALSE, changed_w = PETSC_FALSE;
   PetscErrorCode ierr;
-  Vec X, F, Y, W, G;
+  Vec X, F, Y, W, G, W1;
   SNES snes;
   PetscReal fnorm, xnorm, ynorm, gnorm;
   PetscBool domainerror;
+  PetscReal ksp_rtol, ksp_abstol, ksp_dtol;
+  PetscInt ksp_maxits;
+  KSP ksp;
 
   ierr = SNESLineSearchGetVecs(linesearch, &X, &F, &Y, &W, &G);
   LIBMESH_CHKERR(ierr);
@@ -38,6 +41,18 @@ MinimizeResidual::linesearch(SNESLineSearch linesearch)
   LIBMESH_CHKERR(ierr);
   ierr = SNESLineSearchSetReason(linesearch, SNES_LINESEARCH_SUCCEEDED);
   LIBMESH_CHKERR(ierr);
+  ierr = SNESGetKSP(snes, &ksp);
+  LIBMESH_CHKERR(ierr);
+  ierr = KSPGetTolerances(ksp, &ksp_rtol, &ksp_abstol, &ksp_dtol, &ksp_maxits);
+  LIBMESH_CHKERR(ierr);
+  ierr = VecDuplicate(W, &W1);
+  LIBMESH_CHKERR(ierr);
+
+  if (!_user_ksp_rtol_set)
+  {
+    _user_ksp_rtol = ksp_rtol;
+    _user_ksp_rtol_set = true;
+  }
 
   ++_nl_its;
   _communicator.set_union(_old_contact_state);
@@ -67,56 +82,48 @@ MinimizeResidual::linesearch(SNESLineSearch linesearch)
   LIBMESH_CHKERR(ierr);
   _communicator.set_union(_current_contact_state);
   std::set<dof_id_type> contact_state_stored = _current_contact_state;
-  if (!_current_contact_state.empty())
-  {
-    _console << "Node ids in contact: ";
-    for (auto & node_id : _current_contact_state)
-      _console << node_id << " ";
-    _console << "\n";
-  }
-  else
-    _console << "No nodes in contact\n";
+  printContactInfo();
 
   if (_current_contact_state != _old_contact_state)
   {
-    while (true)
-    {
-      _contact_lambda *= 0.5;
-      /* update */
-      ierr = VecWAXPY(W, -_contact_lambda, Y, X);
-      LIBMESH_CHKERR(ierr);
+    KSPSetTolerances(ksp, .5, ksp_abstol, ksp_dtol, ksp_maxits);
+    _console << "Contact set changed since previous non-linear iteration!\n";
+  }
+  else
+    KSPSetTolerances(ksp, _user_ksp_rtol, ksp_abstol, ksp_dtol, ksp_maxits);
 
-      _current_contact_state.clear();
-      ierr = (*linesearch->ops->snesfunc)(snes, W, G);
+  while (_contact_lambda > 1e-3)
+  {
+    _contact_lambda *= 0.5;
+    /* update */
+    ierr = VecWAXPY(W1, -_contact_lambda, Y, X);
+    LIBMESH_CHKERR(ierr);
+
+    _current_contact_state.clear();
+    ierr = (*linesearch->ops->snesfunc)(snes, W1, G);
+    LIBMESH_CHKERR(ierr);
+    ierr = SNESGetFunctionDomainError(snes, &domainerror);
+    LIBMESH_CHKERR(ierr);
+    if (domainerror)
+    {
+      ierr = SNESLineSearchSetReason(linesearch, SNES_LINESEARCH_FAILED_DOMAIN);
       LIBMESH_CHKERR(ierr);
-      ierr = SNESGetFunctionDomainError(snes, &domainerror);
-      LIBMESH_CHKERR(ierr);
-      if (domainerror)
-      {
-        ierr = SNESLineSearchSetReason(linesearch, SNES_LINESEARCH_FAILED_DOMAIN);
-        LIBMESH_CHKERR(ierr);
-      }
-      ierr = VecNorm(G, NORM_2, &gnorm);
-      LIBMESH_CHKERR(ierr);
-      if (gnorm < fnorm)
-      {
-        VecCopy(G, F);
-        fnorm = gnorm;
-        _communicator.set_union(_current_contact_state);
-        contact_state_stored = _current_contact_state;
-        if (!_current_contact_state.empty())
-        {
-          _console << "Node ids in contact: ";
-          for (auto & node_id : _current_contact_state)
-            _console << node_id << " ";
-          _console << "\n";
-        }
-        else
-          _console << "No nodes in contact\n";
-      }
-      else
-        break;
     }
+    ierr = VecNorm(G, NORM_2, &gnorm);
+    LIBMESH_CHKERR(ierr);
+    if (gnorm < fnorm)
+    {
+      VecCopy(G, F);
+      LIBMESH_CHKERR(ierr);
+      VecCopy(W1, W);
+      LIBMESH_CHKERR(ierr);
+      fnorm = gnorm;
+      _communicator.set_union(_current_contact_state);
+      contact_state_stored = _current_contact_state;
+      printContactInfo();
+    }
+    else
+      break;
   }
 
   ierr = VecScale(Y, _contact_lambda);
@@ -145,15 +152,7 @@ MinimizeResidual::linesearch(SNESLineSearch linesearch)
     }
     _communicator.set_union(_current_contact_state);
     contact_state_stored = _current_contact_state;
-    if (!_current_contact_state.empty())
-    {
-      _console << "Node ids in contact: ";
-      for (auto & node_id : _current_contact_state)
-        _console << node_id << " ";
-      _console << "\n";
-    }
-    else
-      _console << "No nodes in contact\n";
+    printContactInfo();
   }
 
   ierr = VecNorm(Y, NORM_2, &linesearch->ynorm);
@@ -168,4 +167,19 @@ MinimizeResidual::linesearch(SNESLineSearch linesearch)
   LIBMESH_CHKERR(ierr);
 
   _old_contact_state = contact_state_stored;
+}
+
+void
+MinimizeResidual::printContactInfo()
+{
+  if (!_current_contact_state.empty())
+  {
+    // _console << "Node ids in contact: ";
+    // for (auto & node_id : _current_contact_state)
+    //   _console << node_id << " ";
+    // _console << "\n";
+    _console << _current_contact_state.size() << " nodes in contact\n";
+  }
+  else
+    _console << "No nodes in contact\n";
 }

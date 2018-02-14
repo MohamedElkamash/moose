@@ -35,10 +35,15 @@ public:
   /// The old contact state
   virtual std::set<dof_id_type> * old_contact_state() override { return &_old_contact_state; }
 
+  void printContactInfo();
+
 protected:
   /// The entire contact set
   std::set<dof_id_type> _current_contact_state;
   std::set<dof_id_type> _old_contact_state;
+
+  PetscReal _user_ksp_rtol;
+  bool _user_ksp_rtol_set;
 };
 
 #endif

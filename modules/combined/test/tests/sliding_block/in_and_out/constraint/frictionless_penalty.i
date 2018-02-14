@@ -177,9 +177,9 @@
   line_search = 'none'
 
   l_max_its = 100
-  nl_max_its = 30
+  nl_max_its = 20
   dt = 0.1
-  end_time = 1
+  end_time = 3
   # num_steps = 30
   l_tol = 1e-6
   nl_rel_tol = 1e-10
