@@ -168,6 +168,9 @@ MinimizeResidual::linesearch(SNESLineSearch linesearch)
   ierr = VecCopy(W, X);
   LIBMESH_CHKERR(ierr);
 
+  ierr = VecDestroy(&W1);
+  LIBMESH_CHKERR(ierr);
+
   _old_contact_state = contact_state_stored;
 }
 
