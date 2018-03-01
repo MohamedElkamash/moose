@@ -137,10 +137,10 @@ protected:
   /// The tolerance of the frictional force for augmented Lagrangian method
   Real _al_frictional_force_tolerance;
 
+#ifdef LIBMESH_HAVE_PETSC
   ContactLineSearch * _contact_linesearch;
+#endif
   std::set<dof_id_type> * _current_contact_state;
-  std::set<dof_id_type> * _initial_contact_state;
-  PetscNonlinearSolver<Real> * _petsc_solver;
 
   static Threads::spin_mutex _contact_set_mutex;
 };

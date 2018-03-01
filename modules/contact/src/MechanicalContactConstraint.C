@@ -110,8 +110,9 @@ validParams<MechanicalContactConstraint>()
                         "The tolerance of the frictional force for augmented Lagrangian method.");
   params.addParam<bool>(
       "print_contact_nodes", false, "Whether to print the number of nodes in contact.");
+#ifdef LIBMESH_HAVE_PETSC
   params.addPrivateParam<ContactLineSearch *>("contact_linesearch", nullptr);
-  params.addPrivateParam<PetscNonlinearSolver<Real> *>("petsc_solver", nullptr);
+#endif
   return params;
 }
 
@@ -141,11 +142,12 @@ MechanicalContactConstraint::MechanicalContactConstraint(const InputParameters &
     _master_slave_jacobian(getParam<bool>("master_slave_jacobian")),
     _connected_slave_nodes_jacobian(getParam<bool>("connected_slave_nodes_jacobian")),
     _non_displacement_vars_jacobian(getParam<bool>("non_displacement_variables_jacobian")),
+#ifdef LIBMESH_HAVE_PETSC
     _contact_linesearch(getParam<ContactLineSearch *>("contact_linesearch")),
-    _current_contact_state(_contact_linesearch ? _contact_linesearch->contact_state() : nullptr),
-    _initial_contact_state(_contact_linesearch ? _contact_linesearch->old_contact_state()
-                                               : nullptr),
-    _petsc_solver(getParam<PetscNonlinearSolver<Real> *>("petsc_solver"))
+    _current_contact_state(_contact_linesearch ? _contact_linesearch->contact_state() : nullptr)
+#else
+    _current_contact_state(nullptr)
+#endif
 {
   _overwrite_slave_residual = false;
 
@@ -235,14 +237,10 @@ MechanicalContactConstraint::timestepSetup()
 
     _update_stateful_data = false;
 
+#ifdef LIBMESH_HAVE_PETSC
     if (_contact_linesearch)
-    {
-      _contact_linesearch->lambda() = 1.;
-      _contact_linesearch->contactChangingThisTimestep() = false;
-      if (_initial_contact_state)
-        _initial_contact_state->clear();
       _contact_linesearch->nl_its() = 0;
-    }
+#endif
   }
 }
 
@@ -490,9 +488,7 @@ MechanicalContactConstraint::shouldApply()
         if (is_nonlinear)
         {
           Threads::spin_mutex::scoped_lock lock(_contact_set_mutex);
-          if (_initial_contact_state && _contact_linesearch->nl_its() == 0)
-            _initial_contact_state->insert(pinfo->_node->id());
-          else if (_current_contact_state)
+          if (_current_contact_state)
             _current_contact_state->insert(pinfo->_node->id());
         }
       }

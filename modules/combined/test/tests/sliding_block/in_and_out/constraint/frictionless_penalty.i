@@ -211,6 +211,6 @@
     formulation = penalty
     system = constraint
     normal_smoothing_distance = 0.1
-    line_search = MinimizeResidual
+    custom_line_search = true
   [../]
 []

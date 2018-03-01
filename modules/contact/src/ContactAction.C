@@ -13,9 +13,7 @@
 #include "FEProblem.h"
 #include "Conversion.h"
 #include "AddVariableAction.h"
-#include "PenalizeAnyChange.h"
-#include "PenalizeOscillations.h"
-#include "MinimizeResidual.h"
+#include "ContactLineSearch.h"
 #include "NonlinearSystemBase.h"
 #include "libmesh/petsc_nonlinear_solver.h"
 
@@ -83,16 +81,12 @@ validParams<ContactAction>()
 
   params.addParam<Real>("al_frictional_force_tolerance",
                         "The tolerance of the frictional force for augmented Lagrangian method.");
-  params.addParam<Real>(
-      "contact_cutback_factor",
-      0.4,
-      "How much to cut-back lambda in the newton step when the contact state changes.");
-  params.addParam<Real>(
-      "contact_growth_factor",
-      1.2,
-      "How much to grow lambda in the newton step when the contact state is unchanged.");
-  MooseEnum line_search("PenalizeAny PenalizeOscillations MinimizeResidual Petsc", "Petsc");
-  params.addParam<MooseEnum>("line_search", line_search, "What type of line search to use.");
+  params.addParam<bool>(
+      "custom_line_search", false, "Whether to use a contact customized line search.");
+  params.addParam<unsigned>(
+      "allowed_lambda_cuts",
+      2,
+      "The number of times lambda is allowed to be cut in half in the custom line search");
   return params;
 }
 
@@ -117,25 +111,13 @@ ContactAction::ContactAction(const InputParameters & params)
 void
 ContactAction::act()
 {
-  std::unique_ptr<ContactLineSearch> contact_linesearch = nullptr;
-  if (getParam<MooseEnum>("line_search") == "PenalizeAny")
-    contact_linesearch =
-        libmesh_make_unique<PenalizeAnyChange>(*_problem,
-                                               getParam<Real>("contact_cutback_factor"),
-                                               getParam<Real>("contact_growth_factor"),
-                                               _app);
-  else if (getParam<MooseEnum>("line_search") == "PenalizeOscillations")
-    contact_linesearch =
-        libmesh_make_unique<PenalizeOscillations>(*_problem,
-                                                  getParam<Real>("contact_cutback_factor"),
-                                                  getParam<Real>("contact_growth_factor"),
-                                                  _app);
-  else if (getParam<MooseEnum>("line_search") == "MinimizeResidual")
-    contact_linesearch =
-        libmesh_make_unique<MinimizeResidual>(*_problem,
-                                              getParam<Real>("contact_cutback_factor"),
-                                              getParam<Real>("contact_growth_factor"),
-                                              _app);
+#ifdef LIBMESH_HAVE_PETSC
+  std::unique_ptr<ContactLineSearch> contact_linesearch =
+      getParam<bool>("custom_line_search")
+          ? libmesh_make_unique<ContactLineSearch>(
+                *_problem, _app, getParam<unsigned>("allowed_lambda_cuts"))
+          : nullptr;
+#endif
 
   if (!_problem->getDisplacedProblem())
     mooseError("Contact requires updated coordinates.  Use the 'displacements = ...' line in the "
@@ -193,8 +175,9 @@ ContactAction::act()
         params.set<unsigned int>("component") = i;
         params.set<NonlinearVariableName>("variable") = displacements[i];
         params.set<std::vector<VariableName>>("master_variable") = {coupled_displacements[i]};
+#ifdef LIBMESH_HAVE_PETSC
         params.set<ContactLineSearch *>("contact_linesearch") = contact_linesearch.get();
-
+#endif
         _problem->addConstraint("MechanicalContactConstraint", name, params);
       }
     }
@@ -238,7 +221,9 @@ ContactAction::act()
       }
     }
   }
+#ifdef LIBMESH_HAVE_PETSC
   PetscNonlinearSolver<Real> & petsc_nonlinear_solver = static_cast<PetscNonlinearSolver<Real> &>(
       *_problem->getNonlinearSystemBase().system().nonlinear_solver);
   petsc_nonlinear_solver.linesearch_object = std::move(contact_linesearch);
+#endif
 }

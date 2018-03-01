@@ -10,10 +10,14 @@
 #ifndef CONTACTLINESEARCH_H
 #define CONTACTLINESEARCH_H
 
-#include "ConsoleStreamInterface.h"
 #include "libmesh/petsc_nonlinear_solver.h"
+
+#ifdef LIBMESH_HAVE_PETSC
+
 #include "libmesh/parallel_object.h"
 #include <petscsnes.h>
+
+#include "ConsoleStreamInterface.h"
 
 using namespace libMesh;
 
@@ -24,55 +28,61 @@ class ContactLineSearch : public PetscNonlinearSolver<Real>::ComputeLineSearchOb
                           public ParallelObject
 {
 public:
-  ContactLineSearch(FEProblemBase & fe_problem,
-                    Real cutback_factor,
-                    Real growth_factor,
-                    MooseApp & app);
+  ContactLineSearch(FEProblemBase & fe_problem, MooseApp & app, size_t allowed_lambda_cuts);
 
-  /// Returns a writeable reference to the _contact_changing_this_timestep flag
-  bool & contactChangingThisTimestep() { return _contact_changing_this_timestep; }
+  /**
+   * The custom linesearch implementation method
+   */
+  virtual void linesearch(SNESLineSearch linesearch) override;
 
-  /// Our lambda
-  Real & lambda() { return _contact_lambda; }
+  /**
+   * The current contact state
+   */
+  std::set<dof_id_type> * contact_state() { return &_current_contact_state; }
 
-  /// The current contact state
-  virtual std::set<dof_id_type> * contact_state() { return nullptr; }
+  /**
+   * The old contact state
+   */
+  std::set<dof_id_type> * old_contact_state() { return &_old_contact_state; }
 
-  /// The old contact state
-  virtual std::set<dof_id_type> * old_contact_state() { return nullptr; }
+  /**
+   * Method for printing the contact information
+   */
+  void printContactInfo();
 
-  /// newly captured nodes
-  virtual std::set<dof_id_type> * newly_captured_nodes() { return nullptr; }
-
-  /// newly released nodes
-  virtual std::set<dof_id_type> * newly_released_nodes() { return nullptr; }
-
-  /// writeable reference to number of non-linear iterations
+  /**
+   * writeable reference to number of non-linear iterations
+   */
   size_t & nl_its() { return _nl_its; }
 
-  /// read-only reference to number of non-linear iterations
+  /**
+   * read-only reference to number of non-linear iterations
+   */
   const size_t & nl_its() const { return _nl_its; }
 
 protected:
+  /// Reference to the finite element problem
   FEProblemBase & _fe_problem;
 
-  /// Flag that tracks the timestep status for contact problems. Necessary for custom line search
-  bool _contact_changing_this_timestep;
-
-  /// cutback factor
-  Real _cutback_factor;
-
-  /// growth factor
-  Real _growth_factor;
-
-  /// line search scaling factor for contact
-  Real _contact_lambda;
-
-  /// old contact lambda
-  Real _old_contact_lambda;
+  /// The current contact set
+  std::set<dof_id_type> _current_contact_state;
+  /// The old contact set
+  std::set<dof_id_type> _old_contact_state;
 
   /// number of non-linear iterations
   size_t _nl_its;
+
+  /// the linear tolerance set by the user in the input file
+  PetscReal _user_ksp_rtol;
+  /// Whether the user linear tolerance has been set yet in this object
+  bool _user_ksp_rtol_set;
+
+  /// The multiplier of the newton step
+  PetscReal _contact_lambda;
+
+  /// How many times the linsearch is allowed to cut lambda
+  size_t _allowed_lambda_cuts;
 };
 
+#endif
 #endif
