@@ -12,7 +12,7 @@ class ZLDeconstruction;
 template <>
 InputParameters validParams<ZLDeconstruction>();
 
-class ZLDeconstruction : public ElementUserObject, public MooseVariableInterface
+class ZLDeconstruction : public ElementUserObject, public MooseVariableInterface<Real>
 {
 public:
   ZLDeconstruction(const InputParameters & parameters);

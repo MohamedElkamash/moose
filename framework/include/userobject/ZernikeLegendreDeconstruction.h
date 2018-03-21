@@ -13,7 +13,7 @@ InputParameters validParams<ZernikeLegendreDeconstruction>();
 
 class ZernikeLegendreDeconstruction :
   public ElementIntegralUserObject,
-  public MooseVariableInterface
+  public MooseVariableInterface<Real>
 {
 public:
   ZernikeLegendreDeconstruction(const InputParameters & parameters);

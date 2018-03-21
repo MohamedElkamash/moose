@@ -17,6 +17,7 @@
 
 #include "SideIntegralUserObject.h"
 #include "MooseVariableInterface.h"
+
 #include "LegendrePolynomial.h"
 #include "FourierPolynomial.h"
 
@@ -26,7 +27,7 @@ template<>
 InputParameters validParams<FourierLegendreDeconstruction>();
 
 class FourierLegendreDeconstruction : public SideIntegralUserObject,
-  public MooseVariableInterface
+  public MooseVariableInterface<Real>
 {
 public:
   FourierLegendreDeconstruction(const InputParameters & parameters);

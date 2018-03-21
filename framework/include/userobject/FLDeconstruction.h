@@ -26,7 +26,7 @@ class FLDeconstruction;
 template <>
 InputParameters validParams<FLDeconstruction>();
 
-class FLDeconstruction : public SideUserObject, public MooseVariableInterface
+class FLDeconstruction : public SideUserObject, public MooseVariableInterface<Real>
 {
 public:
   FLDeconstruction(const InputParameters & parameters);
