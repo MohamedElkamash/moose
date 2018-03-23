@@ -3,6 +3,7 @@ import os
 import multiprocessing
 import logging
 import subprocess
+import shutil
 
 import anytree
 import livereload
@@ -27,12 +28,14 @@ def command_line_options(subparser, parent):
                         help="Create a local live server.")
     parser.add_argument('--dump', action='store_true',
                         help="Show page tree to the screen.")
-    parser.add_argument('--grammer', action='store_true',
+    parser.add_argument('--grammar', action='store_true',
                         help='Show the lexer components in order.')
     parser.add_argument('--num-threads', '-j', type=int, default=multiprocessing.cpu_count(),
                         help="Specify the number of threads to build pages with.")
     parser.add_argument('--port', default='8000', type=str,
                         help="The local host port for live web server (default: %(default)s).")
+    parser.add_argument('--clean', action='store_true',
+                        help="Clean the destination directory.")
 
 class MooseDocsWatcher(livereload.watcher.Watcher):
     """
@@ -121,6 +124,10 @@ def main(options):
     # Dump page tree
     if options.dump:
         print translator.root
+
+    # Clean
+    if options.clean:
+        shutil.rmtree(options.destination)
 
     # Perform build
     translator.execute(options.num_threads)

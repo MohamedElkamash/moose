@@ -148,8 +148,6 @@ public:
   virtual void
   h_dpT(Real pressure, Real temperature, Real & h, Real & dh_dp, Real & dh_dT) const override;
 
-  virtual Real beta(Real pressure, Real temperature) const override;
-
   /**
    * Saturation pressure as a function of temperature
    *
@@ -267,10 +265,6 @@ public:
    * @return density (kg/m^3) in region 3
    */
   Real densityRegion3(Real pressure, Real temperature) const;
-
-  virtual Real henryConstant(Real temperature) const override;
-
-  virtual void henryConstant_dT(Real temperature, Real & Kh, Real & dKh_dT) const override;
 
   /**
    * Backwards equation T(p, h)

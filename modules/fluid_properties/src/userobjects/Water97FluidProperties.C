@@ -808,11 +808,6 @@ Water97FluidProperties::h_dpT(
   dh_dT = denthalpy_dT;
 }
 
-Real Water97FluidProperties::beta(Real /*pressure*/, Real /*temperature*/) const
-{
-  mooseError(name(), ": beta() not implemented yet");
-}
-
 Real
 Water97FluidProperties::vaporPressure(Real temperature) const
 {
@@ -1675,19 +1670,6 @@ Water97FluidProperties::densityRegion3(Real pressure, Real temperature) const
 
   // Density is the inverse of volume
   return 1.0 / volume;
-}
-
-Real Water97FluidProperties::henryConstant(Real /*temperature*/) const
-{
-  mooseError(name(), ": henryConstant() not defined");
-}
-
-void
-Water97FluidProperties::henryConstant_dT(Real /* temperature */,
-                                         Real & /* Kh */,
-                                         Real & /* dKh_dT */) const
-{
-  mooseError(name(), ": henryConstant_dT() not defined");
 }
 
 unsigned int
