@@ -91,6 +91,10 @@ validParams<ContactAction>()
                         .5,
                         "The linear relative tolerance to be used while the contact state is "
                         "changing between non-linear iterations.");
+  params.addParam<bool>(
+      "affect_ltol",
+      true,
+      "Whether the custom line search modifies the line search when the contact set is changing.");
   return params;
 }
 
@@ -121,7 +125,8 @@ ContactAction::act()
           ? libmesh_make_unique<ContactLineSearch>(*_problem,
                                                    _app,
                                                    getParam<unsigned>("allowed_lambda_cuts"),
-                                                   getParam<Real>("contact_ltol"))
+                                                   getParam<Real>("contact_ltol"),
+                                                   getParam<bool>("affect_ltol"))
           : nullptr;
 #endif
 
