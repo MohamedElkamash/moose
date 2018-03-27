@@ -68,6 +68,7 @@ private:
                                                     const std::string & object_name,
                                                     const std::string & app_name);
 
+protected:
   /// Function pointer for grabbing the MultiApp object
   GetProblemObject getMultiAppObject;
 
