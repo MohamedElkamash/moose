@@ -33,6 +33,7 @@ ifeq ($(ALL_MODULES),yes)
         RDG                         := yes
         REACTOR                     := yes
         RICHARDS                    := yes
+        SOLID_PROPERTIES            := yes
         STOCHASTIC_TOOLS            := yes
         TENSOR_MECHANICS            := yes
         THERMAL_HYDRAULICS          := yes
@@ -250,6 +251,7 @@ ifeq ($(PHASE_FIELD),yes)
   include $(FRAMEWORK_DIR)/app.mk
 endif
 
+<<<<<<< HEAD
 ifeq ($(POROUS_FLOW),yes)
   APPLICATION_DIR    := $(MOOSE_DIR)/modules/porous_flow
   APPLICATION_NAME   := porous_flow
@@ -263,6 +265,20 @@ ifeq ($(THERMAL_HYDRAULICS),yes)
   APPLICATION_NAME   := thermal_hydraulics
   DEPEND_MODULES     := navier_stokes fluid_properties heat_conduction rdg ray_tracing misc
   SUFFIX             := th
+=======
+ifeq ($(SOLID_PROPERTIES),yes)
+  APPLICATION_DIR    := $(MOOSE_DIR)/modules/solid_properties
+  APPLICATION_NAME   := solid_properties
+  SUFFIX             := sp
+  include $(FRAMEWORK_DIR)/app.mk
+endif
+
+
+ifeq ($(STOCHASTIC_TOOLS),yes)
+  APPLICATION_DIR    := $(MOOSE_DIR)/modules/stochastic_tools
+  APPLICATION_NAME   := stochastic_tools
+  SUFFIX             := st
+>>>>>>> a8eec7cd13 (Initial commit with solid properties module. Refs #12284)
   include $(FRAMEWORK_DIR)/app.mk
 endif
 
