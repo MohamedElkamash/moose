@@ -89,7 +89,7 @@ ifeq ($(XFEM),yes)
 endif
 
 # The master list of all moose modules
-MODULE_NAMES := "chemical_reactions contact external_petsc_solver fluid_properties fsi functional_expansion_tools geochemistry heat_conduction level_set misc navier_stokes peridynamics phase_field porous_flow ray_tracing rdg reactor richards stochastic_tools tensor_mechanics thermal_hydraulics xfem"
+MODULE_NAMES := "chemical_reactions contact external_petsc_solver fluid_properties fsi functional_expansion_tools geochemistry heat_conduction level_set misc navier_stokes peridynamics phase_field porous_flow ray_tracing rdg reactor richards solid_properties stochastic_tools tensor_mechanics thermal_hydraulics xfem"
 
 ################################################################################
 ########################## MODULE REGISTRATION #################################
@@ -251,7 +251,6 @@ ifeq ($(PHASE_FIELD),yes)
   include $(FRAMEWORK_DIR)/app.mk
 endif
 
-<<<<<<< HEAD
 ifeq ($(POROUS_FLOW),yes)
   APPLICATION_DIR    := $(MOOSE_DIR)/modules/porous_flow
   APPLICATION_NAME   := porous_flow
@@ -260,12 +259,6 @@ ifeq ($(POROUS_FLOW),yes)
   include $(FRAMEWORK_DIR)/app.mk
 endif
 
-ifeq ($(THERMAL_HYDRAULICS),yes)
-  APPLICATION_DIR    := $(MOOSE_DIR)/modules/thermal_hydraulics
-  APPLICATION_NAME   := thermal_hydraulics
-  DEPEND_MODULES     := navier_stokes fluid_properties heat_conduction rdg ray_tracing misc
-  SUFFIX             := th
-=======
 ifeq ($(SOLID_PROPERTIES),yes)
   APPLICATION_DIR    := $(MOOSE_DIR)/modules/solid_properties
   APPLICATION_NAME   := solid_properties
@@ -273,12 +266,11 @@ ifeq ($(SOLID_PROPERTIES),yes)
   include $(FRAMEWORK_DIR)/app.mk
 endif
 
-
-ifeq ($(STOCHASTIC_TOOLS),yes)
-  APPLICATION_DIR    := $(MOOSE_DIR)/modules/stochastic_tools
-  APPLICATION_NAME   := stochastic_tools
-  SUFFIX             := st
->>>>>>> a8eec7cd13 (Initial commit with solid properties module. Refs #12284)
+ifeq ($(THERMAL_HYDRAULICS),yes)
+  APPLICATION_DIR    := $(MOOSE_DIR)/modules/thermal_hydraulics
+  APPLICATION_NAME   := thermal_hydraulics
+  DEPEND_MODULES     := navier_stokes fluid_properties heat_conduction rdg ray_tracing misc
+  SUFFIX             := th
   include $(FRAMEWORK_DIR)/app.mk
 endif
 
