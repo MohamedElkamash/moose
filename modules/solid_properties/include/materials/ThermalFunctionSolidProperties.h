@@ -55,13 +55,13 @@ public:
 
 protected:
   /// Function providing the thermal conductivity as a function of temperature
-  Function & _k_function;
+  const Function & _k_function;
 
   /// Function providing the isobaric specific heat as a function of temperature
-  Function & _cp_function;
+  const Function & _cp_function;
 
   /// Function providing the density as a function of temperature
-  Function & _rho_function;
+  const Function & _rho_function;
 
 private:
   /// The solid name
