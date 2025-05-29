@@ -20,8 +20,8 @@
   [parsed]
     type = ParsedVectorAux
     variable = fluid_velocity
-    expression_x = '2*x'
-    expression_y = '5*y'
+    expression_x = '2'
+    expression_y = '1'
     expression_z = '0'
     use_xyzt = true
   []
@@ -40,7 +40,7 @@
   [tracking]
     type = TrackingKernel
     fluid_velocity = fluid_velocity
-    dt = 1
+    dt = 0.25
   []
 []
 

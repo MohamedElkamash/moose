@@ -27,16 +27,32 @@ TrackingKernel::preTrace()
     _v = Point(MetaPhysicL::raw_value(v_f(0)),  
                MetaPhysicL::raw_value(v_f(1)),  
                MetaPhysicL::raw_value(v_f(2))); //particle initial velocity
-    _v.print();
+    _r.print();
+    std::cout << '\n';
+
 }
 
 void
 TrackingKernel::onSegment()
 {
-    //_current_segment_start.print();
-    //std::cout << "\n";
-    // const std::shared_ptr<Ray> ray = currentRay();
-    // std::cout << ray->getInfo() << '\n';
+    static bool isRayMoving = false;
+    //compute next position
+    if (!isRayMoving)
+    {
+        _r += _v * _dt;
+        _r.print();
+        std::cout << '\n';
+        isRayMoving = true;
+    }
+
+    //move ray until it reaches next position
+    while(currentRay->currentElem()->contains_point(_r))
+    {
+        
+    }
+
+
+
 }
 
 void
