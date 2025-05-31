@@ -12,7 +12,8 @@ TrackingKernel::validParams()
   return params;
 }
 
-TrackingKernel::TrackingKernel(const InputParameters & params) : GeneralRayKernel(params),
+TrackingKernel::TrackingKernel(const InputParameters & params) : 
+GeneralRayKernel(params),
 _fluid_velocity(getVectorVar("fluid_velocity", 0)),
 _dt(getParam<Real>("dt"))
 {}
@@ -22,7 +23,7 @@ TrackingKernel::preTrace()
 {
   _r = currentRay()->currentPoint(); //particle initial position
   _v = sampleFluidVelocityField();  //particle initial velocity
-  changeRayStartDirection(_r, _v);
+  //changeRayStartDirection(_r, _v);
   _r.print();
   std::cout << '\n';
 
@@ -32,14 +33,15 @@ void
 TrackingKernel::onSegment()
 {
   std::cout << "Element = " << currentRay()->currentElem()->id() << '\n';
-  static bool isRayMoving = false;
+  static bool rayhasmoved = false;
+ 
   //compute next position
-  if (!isRayMoving)
+  if (!rayhasmoved)
   {
     _r += _v * _dt;
     _r.print();
     std::cout << '\n';
-    isRayMoving = true;
+    rayhasmoved = true;
   }
 
   //move ray until it reaches next position
@@ -47,9 +49,9 @@ TrackingKernel::onSegment()
   //change direction of the ray if it reached the next position
   if (isNextPositionInCurrentElement)
   {
-      _v = sampleFluidVelocityField();
-      changeRayStartDirection(_r, _v);
-      isRayMoving = false;
+    _v = sampleFluidVelocityField();
+    changeRayStartDirection(_r, _v);
+    rayhasmoved = false;
   }
 }
 

@@ -32,7 +32,7 @@
     type = RepeatableRayStudy
     names = 'particle_1'
     start_points = '0.5 0.5 0'
-    directions = '1 0 0'
+    directions = '2 1 0'
   []
 []
 
