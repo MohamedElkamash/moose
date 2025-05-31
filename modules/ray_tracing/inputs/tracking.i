@@ -40,7 +40,7 @@
   [tracking]
     type = TrackingKernel
     fluid_velocity = fluid_velocity
-    dt = 0.25
+    dt = 0.1
   []
 []
 
@@ -59,6 +59,9 @@
   type = Steady
 []
 
+[Outputs]
+  exodus = true
+[]
 
 
 

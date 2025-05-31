@@ -19,6 +19,9 @@ public:
 
   virtual void postTrace() override;
 
+protected:
+  Point sampleFluidVelocityField();
+
 private:
   const VectorMooseVariable * _fluid_velocity;
 
