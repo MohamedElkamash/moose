@@ -21,44 +21,39 @@ _dt(getParam<Real>("dt"))
 void
 TrackingKernel::preTrace()
 {
-  _r = currentRay()->currentPoint(); //particle initial position
-  _v = sampleFluidVelocityField();  //particle initial velocity
-  //changeRayStartDirection(_r, _v);
-  _r.print();
-  std::cout << '\n';
-
+  _t = 0;
+  _r = currentRay()->currentPoint(); 
+  _v = sampleFluidVelocityField();  
+  _particle_history.push_back({_t, _r(0), _r(1), _r(2)});
+  _particle_should_march = true;
 }
 
 void
 TrackingKernel::onSegment()
-{
-  std::cout << "Element = " << currentRay()->currentElem()->id() << '\n';
-  static bool rayhasmoved = false;
- 
-  //compute next position
-  if (!rayhasmoved)
+{  
+  if (_particle_should_march)
   {
+    _t += _dt;
     _r += _v * _dt;
-    _r.print();
-    std::cout << '\n';
-    rayhasmoved = true;
+    _particle_history.push_back({_t, _r(0), _r(1), _r(2)});
+    _particle_should_march = false;
   }
 
-  //move ray until it reaches next position
-  bool isNextPositionInCurrentElement = currentRay()->currentElem()->contains_point(_r);
-  //change direction of the ray if it reached the next position
-  if (isNextPositionInCurrentElement)
+  if (currentRay()->currentElem()->contains_point(_r))
   {
     _v = sampleFluidVelocityField();
     changeRayStartDirection(_r, _v);
-    rayhasmoved = false;
+    _particle_should_march = true;
   }
 }
 
 void
 TrackingKernel::postTrace()
 {
-    //std::cout << currentRay()->getInfo() << '\n';
+  std::ofstream output_file("/home/elkamash/projects/moose/modules/ray_tracing/inputs/particle_position.csv");
+  for (const auto & row : _particle_history)
+    output_file << row[0] << ',' << row[1] << ',' << row[2] << ',' << row[3] << '\n';
+  output_file.close();
 }
 
 Point TrackingKernel::sampleFluidVelocityField()

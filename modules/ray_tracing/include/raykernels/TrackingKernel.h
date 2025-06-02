@@ -23,11 +23,24 @@ protected:
   Point sampleFluidVelocityField();
 
 private:
+  //velocity field of the fluid
   const VectorMooseVariable * _fluid_velocity;
 
+  //particle position
   Point _r;
 
+  //particle velocity
   Point _v;
 
+  //time
+  Real _t;
+
+  //particle marching time step
   Real _dt;
+
+  //flag to start marching particle
+  bool _particle_should_march = true;
+
+  //output vector containing particle position at each time step
+  std::vector<std::vector<Real>> _particle_history;
 };
