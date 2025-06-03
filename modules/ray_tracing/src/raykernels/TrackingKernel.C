@@ -50,7 +50,7 @@ TrackingKernel::onSegment()
 void
 TrackingKernel::postTrace()
 {
-  std::ofstream output_file("/home/elkamash/projects/moose/modules/ray_tracing/inputs/particle_position.csv");
+  std::ofstream output_file("/home/elkamash/projects/moose/modules/ray_tracing/test_cases/particle_position.csv");
   for (const auto & row : _particle_history)
     output_file << row[0] << ',' << row[1] << ',' << row[2] << ',' << row[3] << '\n';
   output_file.close();
