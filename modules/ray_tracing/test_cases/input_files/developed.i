@@ -15,38 +15,39 @@
   second_order = true
 []
 
-# [AuxVariables]
-#   [fluid_velocity]
-#     family = LAGRANGE_VEC
-#     order = SECOND
-#   []
-# []
-
-# [AuxKernels]
-#   [parsed]
-#     type = ParsedVectorAux
-#     variable = fluid_velocity
-#     expression_x = '1-y^2'
-#     expression_y = '0'
-#     expression_z = '0'
-#     use_xyzt = true
-#   []
-# []
-
-[Variables]
-  [fluid_velocity]
-    family = LAGRANGE_VEC
+[AuxVariables]
+  [vf_x]
+    family = LAGRANGE
+    order = SECOND
+  []
+  [vf_y]
+    family = LAGRANGE
+    order = FIRST
+  []
+  [vf_z]
+    family = LAGRANGE
     order = FIRST
   []
 []
 
-[ICs]
-    [vel_ic]
-    type = VectorFunctionIC
-    variable = fluid_velocity
-    function_x = '1-y^2'
-    function_y = 0
-    function_z = 0
+[AuxKernels]
+  [evaluate_vf_x]
+    type = ParsedAux
+    variable = vf_x
+    expression = '1-y^2 + 0*t'
+    use_xyzt = true
+  []
+  [evaluate_vf_y]
+    type = ParsedAux
+    variable = vf_y
+    expression = '0'
+    use_xyzt = true
+  []
+  [evaluate_vf_z]
+    type = ParsedAux
+    variable = vf_z
+    expression = '0'
+    use_xyzt = true
   []
 []
 
@@ -55,7 +56,7 @@
   [particle_tracking_study]
     type = RepeatableRayStudy
     names = 'particle_1'
-    start_points = '0.25 0.5 0'
+    start_points = '0.25 0.5000001 0'
     directions = '1 0 0'
   []
 []
@@ -63,7 +64,7 @@
 [RayKernels]
   [tracking]
     type = TrackingKernel
-    fluid_velocity = fluid_velocity
+    fluid_velocity = 'vf_x vf_y vf_z'
     dt = 1
   []
 []

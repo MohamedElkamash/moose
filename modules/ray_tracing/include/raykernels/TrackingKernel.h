@@ -24,7 +24,11 @@ protected:
 
 private:
   //velocity field of the fluid
-  const VectorMooseVariable * _fluid_velocity;
+  const std::vector<VariableName> _fluid_velocity;
+
+  //The variable number of the fluid velocity in the system
+  std::vector<unsigned int> _fluid_velocity_var_num;
+
 
   //particle position
   Point _r;

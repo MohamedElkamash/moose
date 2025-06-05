@@ -8,15 +8,19 @@ TrackingKernel::validParams()
   auto params = GeneralRayKernel::validParams();
   params.addClassDescription("A RayKernel that tracks a particle");
   params.addRequiredParam<Real>("dt", "track integration time step");
-  params.addRequiredCoupledVar("fluid_velocity", "velocity field of the fluid");
+  params.addRequiredParam<std::vector<VariableName>>("fluid_velocity", "The velocity field of the fluid.");
   return params;
 }
 
 TrackingKernel::TrackingKernel(const InputParameters & params) : 
 GeneralRayKernel(params),
-_fluid_velocity(getVectorVar("fluid_velocity", 0)),
+_fluid_velocity(getParam<std::vector<VariableName>>("fluid_velocity")),
 _dt(getParam<Real>("dt"))
-{}
+{ 
+  for (int i=0; i<3; ++i)
+    _fluid_velocity_var_num.push_back( 
+      _fe_problem.getVariable(_tid, _fluid_velocity[i], Moose::VarKindType::VAR_ANY, Moose::VarFieldType::VAR_FIELD_STANDARD).number());
+}
 
 void
 TrackingKernel::preTrace()
@@ -60,11 +64,9 @@ TrackingKernel::postTrace()
 
 Point TrackingKernel::sampleFluidVelocityField()
 {
-  Moose::ElemPointArg elem_pt_arg = {currentRay()->currentElem(), _r, true};
-  Moose::StateArg state_arg(static_cast<unsigned int>(0));
-  VectorValue v_f = (*_fluid_velocity)(elem_pt_arg, state_arg);
-  return Point(MetaPhysicL::raw_value(v_f(0)),  
-               MetaPhysicL::raw_value(v_f(1)),  
-               MetaPhysicL::raw_value(v_f(2)));
+  std::vector<Real> v_f(3);
+  for (int i=0; i<3; ++i)
+    v_f[i] = _fe_problem.getSystem(_fluid_velocity[i]).point_value(_fluid_velocity_var_num[i], _r, currentRay()->currentElem());
+  return Point(v_f[0], v_f[1], v_f[2]);
 }
 
