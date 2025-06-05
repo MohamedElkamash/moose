@@ -12,25 +12,44 @@
     ymax = 1
     zmax = 1
   []
+  second_order = true
 []
 
-[AuxVariables]
+# [AuxVariables]
+#   [fluid_velocity]
+#     family = LAGRANGE_VEC
+#     order = SECOND
+#   []
+# []
+
+# [AuxKernels]
+#   [parsed]
+#     type = ParsedVectorAux
+#     variable = fluid_velocity
+#     expression_x = '1-y^2'
+#     expression_y = '0'
+#     expression_z = '0'
+#     use_xyzt = true
+#   []
+# []
+
+[Variables]
   [fluid_velocity]
     family = LAGRANGE_VEC
     order = FIRST
   []
 []
 
-[AuxKernels]
-  [parsed]
-    type = ParsedVectorAux
+[ICs]
+    [vel_ic]
+    type = VectorFunctionIC
     variable = fluid_velocity
-    expression_x = '1-y*y'
-    expression_y = '0'
-    expression_z = '0'
-    use_xyzt = true
+    function_x = '1-y^2'
+    function_y = 0
+    function_z = 0
   []
 []
+
 
 [UserObjects]
   [particle_tracking_study]
@@ -45,7 +64,7 @@
   [tracking]
     type = TrackingKernel
     fluid_velocity = fluid_velocity
-    dt = 0.1
+    dt = 1
   []
 []
 
