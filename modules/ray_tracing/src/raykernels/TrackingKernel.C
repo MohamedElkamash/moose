@@ -9,13 +9,15 @@ TrackingKernel::validParams()
   params.addClassDescription("A RayKernel that tracks a particle");
   params.addRequiredParam<Real>("dt", "track integration time step");
   params.addRequiredParam<std::vector<VariableName>>("fluid_velocity", "The velocity field of the fluid.");
+  params.addParam<bool>("ray_refraction", false, "if true, corrects the direction of the particle at each intersection");
   return params;
 }
 
 TrackingKernel::TrackingKernel(const InputParameters & params) : 
 GeneralRayKernel(params),
 _fluid_velocity(getParam<std::vector<VariableName>>("fluid_velocity")),
-_dt(getParam<Real>("dt"))
+_dt(getParam<Real>("dt")),
+_ray_refraction(getParam<bool>("ray_refraction"))
 { 
   for (int i=0; i<3; ++i)
     _fluid_velocity_var_num.push_back( 
@@ -58,6 +60,11 @@ TrackingKernel::onSegment()
     _t += segment_dt;
     _r = currentRay()->currentPoint();
     _particle_dt -= segment_dt;
+    if (_ray_refraction)
+    {
+      _v = sampleFluidVelocityField();
+      changeRayStartDirection(_r, _v);
+    }
   }
 }
 

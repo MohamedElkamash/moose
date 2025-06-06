@@ -65,6 +65,7 @@
     type = TrackingKernel
     fluid_velocity = 'vf_x vf_y vf_z'
     dt = 0.1
+    ray_refraction = true
   []
 []
 

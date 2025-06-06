@@ -47,6 +47,9 @@ private:
   //flag to start marching particle
   bool _beginning_time_step;
 
+  //whether to correct the velocity at the element boundaries or not
+  bool _ray_refraction;
+
   //output vector containing particle position at each time step
   std::vector<std::vector<Real>> _particle_history;
 };
