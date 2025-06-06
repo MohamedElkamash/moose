@@ -34,7 +34,7 @@
   [evaluate_vf_x]
     type = ParsedAux
     variable = vf_x
-    expression = '1-y^2 + 0*t'
+    expression = '1-y^2'
     use_xyzt = true
   []
   [evaluate_vf_y]
@@ -65,7 +65,7 @@
   [tracking]
     type = TrackingKernel
     fluid_velocity = 'vf_x vf_y vf_z'
-    dt = 1
+    dt = 1.0
   []
 []
 

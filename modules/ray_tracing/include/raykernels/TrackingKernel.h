@@ -29,7 +29,6 @@ private:
   //The variable number of the fluid velocity in the system
   std::vector<unsigned int> _fluid_velocity_var_num;
 
-
   //particle position
   Point _r;
 
@@ -42,8 +41,11 @@ private:
   //particle marching time step
   Real _dt;
 
+  //remaining time step
+  Real _particle_dt;
+
   //flag to start marching particle
-  bool _particle_should_march = true;
+  bool _beginning_time_step;
 
   //output vector containing particle position at each time step
   std::vector<std::vector<Real>> _particle_history;

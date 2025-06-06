@@ -29,32 +29,43 @@ TrackingKernel::preTrace()
   _r = currentRay()->currentPoint(); 
   _v = sampleFluidVelocityField();  
   _particle_history.push_back({_t, _r(0), _r(1), _r(2)});
-  _particle_should_march = true;
+  _beginning_time_step = true;
   _v.print();
 }
 
 void
 TrackingKernel::onSegment()
 {
-  if (_particle_should_march)
+  if (_beginning_time_step)
   {
-    _t += _dt;
-    _r += _v * _dt;
-    _particle_history.push_back({_t, _r(0), _r(1), _r(2)});
-    _particle_should_march = false;
+    _particle_dt = _dt;
+    _beginning_time_step = false;
   }
 
-  if (currentRay()->currentElem()->contains_point(_r))
+  Real segment_dt = _current_segment_length / _v.norm();
+  
+  if (_particle_dt < segment_dt)
   {
+    _t += _particle_dt;
+    _r += _particle_dt * _v;
     _v = sampleFluidVelocityField();
     changeRayStartDirection(_r, _v);
-    _particle_should_march = true;
+    _beginning_time_step = true;
+    _particle_history.push_back({_t, _r(0), _r(1), _r(2)});
+  }
+  else
+  {
+    _t += segment_dt;
+    _r = currentRay()->currentPoint();
+    _particle_dt -= segment_dt;
   }
 }
 
 void
 TrackingKernel::postTrace()
 {
+  //_r = currentRay()->currentPoint();
+  //_particle_history.push_back({_t, _r(0), _r(1), _r(2)});
   //std::ofstream output_file("/home/elkamash/projects/moose/modules/ray_tracing/test_cases/particle_position.csv");
     std::ofstream output_file("/Users/elkamm/projects/moose/modules/ray_tracing/test_cases/particle_position.csv");
   for (const auto & row : _particle_history)

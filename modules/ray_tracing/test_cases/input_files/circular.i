@@ -15,22 +15,41 @@
 []
 
 [AuxVariables]
-  [fluid_velocity]
-    family = LAGRANGE_VEC
+  [vf_x]
+    family = LAGRANGE
+    order = FIRST
+  []
+  [vf_y]
+    family = LAGRANGE
+    order = FIRST
+  []
+  [vf_z]
+    family = LAGRANGE
     order = FIRST
   []
 []
 
 [AuxKernels]
-  [parsed]
-    type = ParsedVectorAux
-    variable = fluid_velocity
-    expression_x = '-y'
-    expression_y = 'x'
-    expression_z = '0'
+  [evaluate_vf_x]
+    type = ParsedAux
+    variable = vf_x
+    expression = '-y'
+    use_xyzt = true
+  []
+  [evaluate_vf_y]
+    type = ParsedAux
+    variable = vf_y
+    expression = 'x'
+    use_xyzt = true
+  []
+  [evaluate_vf_z]
+    type = ParsedAux
+    variable = vf_z
+    expression = '0'
     use_xyzt = true
   []
 []
+
 
 [UserObjects]
   [particle_tracking_study]
@@ -44,7 +63,7 @@
 [RayKernels]
   [tracking]
     type = TrackingKernel
-    fluid_velocity = fluid_velocity
+    fluid_velocity = 'vf_x vf_y vf_z'
     dt = 0.1
   []
 []
@@ -52,7 +71,7 @@
 [RayBCs]
   [kill_particle]
     type = KillRayBC
-    boundary = 'bottom right top left'
+    boundary = 'bottom right top left front back'
   []
 []
 
@@ -67,9 +86,3 @@
 [Outputs]
   exodus = true
 []
-
-
-
-
-
-
