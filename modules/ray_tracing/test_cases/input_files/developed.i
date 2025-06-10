@@ -28,6 +28,10 @@
     family = LAGRANGE
     order = FIRST
   []
+  [rho_f]
+    family = LAGRANGE
+    order = FIRST 
+  []
 []
 
 [AuxKernels]
@@ -49,6 +53,12 @@
     expression = '0'
     use_xyzt = true
   []
+  [evaluate_rho_f]
+    type = ParsedAux
+    variable = rho_f
+    expression = '1000'
+    use_xyzt = true
+  []
 []
 
 
@@ -63,9 +73,10 @@
 
 [RayKernels]
   [tracking]
-    type = TrackingKernel
+    type = ParticleAdvectionKernel
     fluid_velocity = 'vf_x vf_y vf_z'
     dt = 1.0
+    ray_refraction = false
   []
 []
 
