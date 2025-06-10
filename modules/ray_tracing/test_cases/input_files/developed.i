@@ -72,10 +72,22 @@
 []
 
 [RayKernels]
-  [tracking]
-    type = ParticleAdvectionKernel
+  # [tracking]
+  #   type = ParticleAdvectionKernel
+  #   fluid_velocity = 'vf_x vf_y vf_z'
+  #   dt = 0.1
+  #   ray_refraction = false
+  # []
+  [particle_tracking]
+    type = ParticleTrackingKernel
+    particle_density = 2000
+    particle_diameter = 1e-6
+    initial_position = '0.25 0.5000001 0'
+    initial_velocity = '0.75 0 0'
     fluid_velocity = 'vf_x vf_y vf_z'
-    dt = 1.0
+    fluid_density = rho_f
+    gravity = '0 -10 0'
+    dt = 0.01
     ray_refraction = false
   []
 []
