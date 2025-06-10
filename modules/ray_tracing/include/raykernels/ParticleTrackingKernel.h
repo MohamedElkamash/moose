@@ -24,6 +24,10 @@ protected:
 
   Point buoyancy();
 
+  Point drag();
+
+  Real dragCoefficient(Real Re_r);
+
 private:
   //particle position
   Point _r;
@@ -72,6 +76,9 @@ private:
 
   //fluid density value at the particle location
   Real _rho_f;
+
+  //fluid viscosity
+  Real _mu;
 
   //gravity vector
   Point _g;

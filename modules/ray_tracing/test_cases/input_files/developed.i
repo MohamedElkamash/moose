@@ -56,7 +56,7 @@
   [evaluate_rho_f]
     type = ParsedAux
     variable = rho_f
-    expression = '1000'
+    expression = '1400'
     use_xyzt = true
   []
 []
@@ -83,11 +83,12 @@
     particle_density = 2000
     particle_diameter = 1e-6
     initial_position = '0.25 0.5000001 0'
-    initial_velocity = '0.75 0 0'
+    initial_velocity = '0 0 0'
     fluid_velocity = 'vf_x vf_y vf_z'
     fluid_density = rho_f
+    fluid_viscosity = '14'
     gravity = '0 -10 0'
-    dt = 0.01
+    dt = 0.0001
     ray_refraction = false
   []
 []
