@@ -70,8 +70,8 @@ ParticleAdvectionKernel::onSegment()
 void
 ParticleAdvectionKernel::postTrace()
 {
-  //_r = currentRay()->currentPoint();
-  //_particle_history.push_back({_t, _r(0), _r(1), _r(2)});
+  _r = currentRay()->currentPoint();
+  _particle_history.push_back({_t, _r(0), _r(1), _r(2)});
   //std::ofstream output_file("/home/elkamash/projects/moose/modules/ray_tracing/test_cases/particle_position.csv");
     std::ofstream output_file("/Users/elkamm/projects/moose/modules/ray_tracing/test_cases/particle_position.csv");
   for (const auto & row : _particle_history)
