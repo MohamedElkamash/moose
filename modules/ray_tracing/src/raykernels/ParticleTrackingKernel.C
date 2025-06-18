@@ -46,8 +46,8 @@ _g(getParam<Point>("gravity"))
 void
 ParticleTrackingKernel::preTrace()
 {
-  _beginning_time_step = true; 
   _particle_history.push_back({_t, _r(0), _r(1), _r(2)});
+  _beginning_time_step = true;
 }
 
 void
@@ -55,8 +55,12 @@ ParticleTrackingKernel::onSegment()
 {
   if (_beginning_time_step)
   {
-    _particle_dt = _dt;
     _beginning_time_step = false;
+    _particle_dt = _dt;
+    sampleFluidVariables();
+    _F = buoyancy();
+    _v += _dt * _F / _m;
+    changeRayStartDirection(_r, _v);
   }
 
   Real segment_dt = _current_segment_length / _v.norm();
@@ -65,13 +69,10 @@ ParticleTrackingKernel::onSegment()
   {
     _t += _particle_dt;
     _r += _particle_dt * _v;
-    sampleFluidVariables();
-    _F = drag();
-    _v += _dt * _F / _m;
-    _v.print();
-    changeRayStartDirection(_r, _v);
     _beginning_time_step = true;
     _particle_history.push_back({_t, _r(0), _r(1), _r(2)});
+    _r.print();
+    std::cout << '\n';
   }
   else
   {
@@ -84,8 +85,8 @@ ParticleTrackingKernel::onSegment()
 void
 ParticleTrackingKernel::postTrace()
 {
-  //_r = currentRay()->currentPoint();
-  //_particle_history.push_back({_t, _r(0), _r(1), _r(2)});
+  _r = currentRay()->currentPoint();
+  _particle_history.push_back({_t, _r(0), _r(1), _r(2)});
   //std::ofstream output_file("/home/elkamash/projects/moose/modules/ray_tracing/test_cases/particle_position.csv");
     std::ofstream output_file("/Users/elkamm/projects/moose/modules/ray_tracing/test_cases/particle_position.csv");
   for (const auto & row : _particle_history)

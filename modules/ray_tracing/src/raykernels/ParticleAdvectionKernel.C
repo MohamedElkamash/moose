@@ -86,4 +86,3 @@ Point ParticleAdvectionKernel::sampleFluidVelocityField()
     v_f[i] = _fe_problem.getSystem(_fluid_velocity[i]).point_value(_fluid_velocity_var_num[i], _r, currentRay()->currentElem());
   return Point(v_f[0], v_f[1], v_f[2]);
 }
-

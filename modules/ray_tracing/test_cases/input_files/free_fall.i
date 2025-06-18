@@ -2,15 +2,15 @@
   [mesh]
     type = GeneratedMeshGenerator
     dim = 3
-    nx = 20
-    ny = 20
-    nz = 1
+    nx = 10
+    ny = 1
+    nz = 10
     xmin = 0
     ymin = -1
-    zmin = -1
+    zmin = 0
     xmax = 10
     ymax = 1
-    zmax = 1
+    zmax = 10
   []
   second_order = true
 []
@@ -18,7 +18,7 @@
 [AuxVariables]
   [vf_x]
     family = LAGRANGE
-    order = SECOND
+    order = FIRST
   []
   [vf_y]
     family = LAGRANGE
@@ -38,7 +38,7 @@
   [evaluate_vf_x]
     type = ParsedAux
     variable = vf_x
-    expression = '1-y^2'
+    expression = '0'
     use_xyzt = true
   []
   [evaluate_vf_y]
@@ -56,7 +56,7 @@
   [evaluate_rho_f]
     type = ParsedAux
     variable = rho_f
-    expression = '1400'
+    expression = '1000'
     use_xyzt = true
   []
 []
@@ -66,29 +66,23 @@
   [particle_tracking_study]
     type = RepeatableRayStudy
     names = 'particle_1'
-    start_points = '0.25 0.5000001 0'
-    directions = '1 0 0'
+    start_points = '0.5 0 9.5'
+    directions = '0 0 -1'
   []
 []
 
 [RayKernels]
-  # [tracking]
-  #   type = ParticleAdvectionKernel
-  #   fluid_velocity = 'vf_x vf_y vf_z'
-  #   dt = 0.1
-  #   ray_refraction = false
-  # []
   [particle_tracking]
     type = ParticleTrackingKernel
     particle_density = 2000
     particle_diameter = 1e-6
-    initial_position = '0.25 0.5000001 0'
+    initial_position = '0.5 0 9.5'
     initial_velocity = '0 0 0'
     fluid_velocity = 'vf_x vf_y vf_z'
     fluid_density = rho_f
-    fluid_viscosity = '14'
-    gravity = '0 -10 0'
-    dt = 0.0001
+    fluid_viscosity = '1e-3'
+    gravity = '0 0 -10'
+    dt = 0.2
     ray_refraction = false
   []
 []
