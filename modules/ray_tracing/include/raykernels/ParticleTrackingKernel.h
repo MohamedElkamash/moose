@@ -59,6 +59,9 @@ private:
   //whether to correct the velocity at the element boundaries or not
   bool _ray_refraction;
 
+  //first time step
+  bool _first_time_step;
+
   //velocity field of the fluid
   const std::vector<VariableName> _fluid_velocity;
 
