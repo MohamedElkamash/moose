@@ -67,7 +67,7 @@
     type = RepeatableRayStudy
     names = 'particle_1'
     start_points = '0.5 0 9.5'
-    directions = '0.196 0 -0.981'
+    directions = '0 0 -1'
   []
 []
 
@@ -77,12 +77,12 @@
     particle_density = 2000
     particle_diameter = 1e-6
     initial_position = '0.5 0 9.5'
-    initial_velocity = '1 0 0'
+    initial_velocity = '0 0 0'
     fluid_velocity = 'vf_x vf_y vf_z'
     fluid_density = rho_f
     fluid_viscosity = '1e-3'
     gravity = '0 0 -10'
-    dt = 0.05
+    dt = 0.001
     ray_refraction = false
   []
 []
