@@ -1,0 +1,113 @@
+[Mesh]
+  [mesh]
+    type = GeneratedMeshGenerator
+    dim = 3
+    nx = 10
+    ny = 1
+    nz = 10
+    xmin = 0
+    ymin = -1
+    zmin = 0
+    xmax = 10
+    ymax = 1
+    zmax = 10
+  []
+  second_order = true
+[]
+
+[AuxVariables]
+  [vf_x]
+    family = LAGRANGE
+    order = FIRST
+  []
+  [vf_y]
+    family = LAGRANGE
+    order = FIRST
+  []
+  [vf_z]
+    family = LAGRANGE
+    order = FIRST
+  []
+  [rho_f]
+    family = LAGRANGE
+    order = FIRST 
+  []
+[]
+
+[AuxKernels]
+  [evaluate_vf_x]
+    type = ParsedAux
+    variable = vf_x
+    expression = '0'
+    use_xyzt = true
+  []
+  [evaluate_vf_y]
+    type = ParsedAux
+    variable = vf_y
+    expression = '0'
+    use_xyzt = true
+  []
+  [evaluate_vf_z]
+    type = ParsedAux
+    variable = vf_z
+    expression = '0'
+    use_xyzt = true
+  []
+  [evaluate_rho_f]
+    type = ParsedAux
+    variable = rho_f
+    expression = '1000'
+    use_xyzt = true
+  []
+[]
+
+
+[UserObjects]
+  [particle_tracking_study]
+    type = RepeatableRayStudy
+    names = 'particle_1'
+    start_points = '0.5 0 9.5'
+    directions = '0 0 -1'
+  []
+[]
+
+[RayKernels]
+  [particle_tracking]
+    type = ParticleTrackingKernel
+    particle_density = 2000
+    particle_diameter = 1e-6
+    initial_position = '0.5 0 9.5'
+    initial_velocity = '0 0 0'
+    fluid_velocity = 'vf_x vf_y vf_z'
+    fluid_density = rho_f
+    fluid_viscosity = '1e-3'
+    gravity = '0 0 -10'
+    dt = 0.2
+    ray_refraction = false
+  []
+[]
+
+[RayBCs]
+  [kill_particle]
+    type = KillRayBC
+    boundary = 'bottom right top left front back'
+  []
+[]
+
+[Problem]
+  solve = false
+[]
+
+[Executioner]
+  type = Steady
+[]
+
+[Outputs]
+  exodus = true
+[]
+
+
+
+
+
+
