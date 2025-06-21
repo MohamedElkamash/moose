@@ -46,8 +46,12 @@ _g(getParam<Point>("gravity"))
 void
 ParticleTrackingKernel::preTrace()
 {
-  _particle_history.push_back({_t, _r(0), _r(1), _r(2)});
+  _particle_history.push_back({_t, _r(0), _r(1), _r(2), _v(0), _v(1), _v(2)});
   _beginning_time_step = true;
+  sampleFluidVariables();
+  _F = buoyancy() + drag();
+  _v += _dt * _F / _m;
+  changeRayStartDirection(_r, _v);
 }
 
 void
@@ -57,21 +61,6 @@ ParticleTrackingKernel::onSegment()
   {
     _beginning_time_step = false;
     _particle_dt = _dt;
-    sampleFluidVariables();
-    // std::cout << "\ntime = " << _t << '\n';
-    // std::cout << "fluid velocity = ";
-    // _v_f.print();
-    
-    // std::cout << "\ndrag force = ";
-    // drag().print();
-    // std::cout << "\nbuoyancy force = ";
-    // buoyancy().print();
-    // std::cout << "\ntotal force = ";
-    //_F.print();
-    _F = buoyancy() + drag();
-    _v += _dt * _F / _m;
-    std::cout << "\nv = ";
-    _v.print();
   }
 
   Real segment_dt = _current_segment_length / _v.norm();
@@ -80,16 +69,17 @@ ParticleTrackingKernel::onSegment()
   {
     _t += _particle_dt;
     _r += _particle_dt * _v;
-    std::cout << "\nr = ";
-    _r.print();
+    sampleFluidVariables();
+    _F = buoyancy() + drag();
+    _v += _dt * _F / _m;
     changeRayStartDirection(_r, _v);
     _beginning_time_step = true;
-    _particle_history.push_back({_t, _r(0), _r(1), _r(2)});
+    _particle_history.push_back({_t, _r(0), _r(1), _r(2), _v(0), _v(1), _v(2)});
   }
   else
   {
     _t += segment_dt; 
-    _r = currentRay()->currentPoint();
+    _r += segment_dt * _v;
     _particle_dt -= segment_dt;
   }
 }
@@ -98,11 +88,11 @@ void
 ParticleTrackingKernel::postTrace()
 {
   _r = currentRay()->currentPoint();
-  _particle_history.push_back({_t, _r(0), _r(1), _r(2)});
-  //td::ofstream output_file("/home/elkamash/projects/moose/modules/ray_tracing/test_cases/particle_position.csv");
-  std::ofstream output_file("/Users/elkamm/projects/moose/modules/ray_tracing/test_cases/particle_position.csv");
+  _particle_history.push_back({_t, _r(0), _r(1), _r(2), _v(0), _v(1), _v(2)});
+  std::ofstream output_file("/home/elkamash/projects/moose/modules/ray_tracing/test_cases/particle_position.csv");
+  //std::ofstream output_file("/Users/elkamm/projects/moose/modules/ray_tracing/test_cases/particle_position.csv");
   for (const auto & row : _particle_history)
-    output_file << row[0] << ',' << row[1] << ',' << row[2] << ',' << row[3] << '\n';
+    output_file << row[0] << ',' << row[1] << ',' << row[2] << ',' << row[3] << ',' << row[4] << ',' << row[5] << ',' << row[6] << '\n';
   output_file.close();
 }
 

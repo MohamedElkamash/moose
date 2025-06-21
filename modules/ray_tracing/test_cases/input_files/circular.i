@@ -55,8 +55,8 @@
   [particle_tracking_study]
     type = RepeatableRayStudy
     names = 'particle_1'
-    start_points = '0.5 0 0'
-    directions = '0 0.5 0'
+    start_points = '0.25 0 0'
+    directions = '0 1 0'
   []
 []
 
@@ -64,8 +64,8 @@
   [tracking]
     type = ParticleAdvectionKernel
     fluid_velocity = 'vf_x vf_y vf_z'
-    dt = 0.1
-    ray_refraction = true
+    dt = 0.019635
+    ray_refraction = false
   []
 []
 

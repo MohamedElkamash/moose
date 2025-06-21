@@ -82,7 +82,7 @@
     fluid_density = rho_f
     fluid_viscosity = '0.081'
     gravity = '0 0 -10'
-    dt = 0.001
+    dt = 0.002
     ray_refraction = false
   []
 []

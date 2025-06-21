@@ -56,7 +56,7 @@
   [evaluate_rho_f]
     type = ParsedAux
     variable = rho_f
-    expression = '1000'
+    expression = '0'
     use_xyzt = true
   []
 []
@@ -67,7 +67,8 @@
     type = RepeatableRayStudy
     names = 'particle_1'
     start_points = '0.5 0 9.5'
-    directions = '0.196 0 -0.981'
+    #directions = '0.196 0 -0.981'
+    directions = '1 0 0'
   []
 []
 

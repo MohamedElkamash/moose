@@ -77,9 +77,9 @@ RayKernelBase::changeRayStartDirection(const Point & start, const Point & direct
                  ray->getInfo());
   }
 
-  if (ray->trajectoryChanged())
+  /*if (ray->trajectoryChanged())
     mooseError("Cannot change a Ray's trajectory when its trajectory has already been changed\n\n",
-               ray->getInfo());
+               ray->getInfo());*/
 
   if (ray->endSet())
     mooseError("Cannot change the direction of a Ray whose end point is set upon generation "
